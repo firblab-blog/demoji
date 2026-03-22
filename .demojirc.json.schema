@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://demoji.dev/schema/demojirc.json",
+  "title": "demoji configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "strict": {
+      "type": "boolean",
+      "description": "Remove emoji found in string literals when true."
+    },
+    "include": {
+      "type": "array",
+      "description": "Optional glob patterns to include during scans.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "exclude": {
+      "type": "array",
+      "description": "Optional glob patterns to exclude during scans.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "json": {
+      "type": "boolean",
+      "description": "Emit machine-readable output when true."
+    }
+  }
+}
