@@ -70,11 +70,16 @@ async function resolveEntryKind(
   }
 
   if (entry.isSymbolicLink()) {
-    const entryStat = await stat(fullPath);
-    if (entryStat.isDirectory()) {
-      return 'directory';
+    try {
+      const entryStat = await stat(fullPath);
+      if (entryStat.isDirectory()) {
+        return 'directory';
+      }
+      return entryStat.isFile() ? 'file' : 'skip';
+    } catch {
+      // Broken symlink (target does not exist) — skip gracefully
+      return 'skip';
     }
-    return entryStat.isFile() ? 'file' : 'skip';
   }
 
   return entry.isFile() ? 'file' : 'skip';

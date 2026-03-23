@@ -374,6 +374,26 @@ function processStreamLine(
   return { matches, totalChars: analysis.totalChars };
 }
 
+/**
+ * Handle errors from the streaming file reader.
+ * Encoding errors (invalid UTF-8) are expected for binary files that slipped
+ * through the extension filter — return null to skip them gracefully.
+ * All other errors are re-thrown.
+ */
+function handleStreamError(
+  error: unknown,
+  displayPath: string,
+  verbose: boolean,
+): null {
+  if (isEncodingError(error)) {
+    if (verbose) {
+      console.warn(`Skipping ${displayPath}: encoding error`);
+    }
+    return null;
+  }
+  throw error;
+}
+
 async function detectLargeFile(
   filePath: string,
   displayPath: string,
@@ -428,14 +448,7 @@ async function detectLargeFile(
       matches.push(...result.matches);
     }
   } catch (error) {
-    if (isEncodingError(error)) {
-      if (verbose) {
-        console.warn(`Skipping ${displayPath}: encoding error`);
-      }
-      return null;
-    }
-
-    throw error;
+    return handleStreamError(error, displayPath, verbose);
   }
 
   return {
