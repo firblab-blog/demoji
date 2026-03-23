@@ -7,6 +7,7 @@ export interface ScanOptions {
   respectGitignore?: boolean;
   respectDemojiIgnore?: boolean;
   maxDepth?: number;
+  verbose?: boolean;
 }
 
 interface IgnoreRule {
@@ -66,6 +67,7 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
   const respectGitignore = options.respectGitignore ?? true;
   const respectDemojiIgnore = options.respectDemojiIgnore ?? true;
   const maxDepth = options.maxDepth ?? 100;
+  const verbose = options.verbose ?? false;
   const visited = new Set<string>();
 
   yield* walkDirectory(root, 0, []);
@@ -76,6 +78,9 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
     inheritedContexts: IgnoreContext[],
   ): AsyncGenerator<string> {
     if (depth > maxDepth) {
+      if (verbose) {
+        console.warn(`Max depth (${maxDepth}) reached at ${directoryPath}`);
+      }
       return;
     }
 
@@ -116,9 +121,7 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
       }
 
       if (entry.isDirectory()) {
-        if (depth < maxDepth) {
-          yield* walkDirectory(fullPath, depth + 1, contexts);
-        }
+        yield* walkDirectory(fullPath, depth + 1, contexts);
         continue;
       }
 
@@ -126,9 +129,7 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
         const entryStat = await stat(fullPath);
 
         if (entryStat.isDirectory()) {
-          if (depth < maxDepth) {
-            yield* walkDirectory(fullPath, depth + 1, contexts);
-          }
+          yield* walkDirectory(fullPath, depth + 1, contexts);
           continue;
         }
 
@@ -149,6 +150,27 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
 
       yield relativePath;
     }
+  }
+}
+
+export async function readScannableTextFile(
+  filePath: string,
+  displayPath = filePath,
+  verbose = false,
+): Promise<string | null> {
+  try {
+    const buffer = await readFile(filePath);
+    const content = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    return stripBom(content);
+  } catch (error) {
+    if (isEncodingError(error)) {
+      if (verbose) {
+        console.warn(`Skipping ${displayPath}: encoding error`);
+      }
+      return null;
+    }
+
+    throw error;
   }
 }
 
@@ -366,6 +388,14 @@ function normalizeRelativePath(root: string, target: string): string {
 
 function isFileMissing(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && 'code' in error && error.code === 'ENOENT';
+}
+
+function isEncodingError(error: unknown): boolean {
+  return error instanceof TypeError && /encoded data was not valid/i.test(error.message);
+}
+
+function stripBom(content: string): string {
+  return content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
 }
 
 export { ALWAYS_SKIP, SUPPORTED_EXTENSIONS, isBinaryFile, isIgnored, parseGitignore };

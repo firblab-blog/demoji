@@ -1,21 +1,15 @@
 import { execFileSync } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 
-import { detect } from './lib/detector.js';
+import { analyzeFile } from './lib/detector.js';
 import { applyToFile, replace, type FileChange } from './lib/replacer.js';
 import { generateReport } from './lib/reporter.js';
 import { scan } from './lib/scanner.js';
 import type { EmojiContext, FileResult, Replacement, ScanResult } from './lib/types.js';
 
 type Command = 'scan' | 'clean' | 'report' | 'help';
-
-interface AnalyzedFile {
-  absolutePath: string;
-  content: string;
-  result: FileResult;
-}
 
 interface IdentifierFlag {
   filePath: string;
@@ -25,9 +19,9 @@ interface IdentifierFlag {
 
 interface Analysis {
   result: ScanResult;
-  analyzedFiles: AnalyzedFile[];
   changes: FileChange[];
   identifierFlags: IdentifierFlag[];
+  noScannableFiles: boolean;
 }
 
 export interface CliOptions {
@@ -169,7 +163,7 @@ export async function run(argv: string[]): Promise<number> {
 
 async function runScan(options: CliOptions): Promise<number> {
   const analysis = await analyzePath(options);
-  writeResult(options, analysis.result, analysis.identifierFlags);
+  writeResult(options, analysis.result, analysis.identifierFlags, analysis.noScannableFiles);
 
   if (options.verbose) {
     printVerboseFiles(analysis.result.files);
@@ -184,7 +178,7 @@ async function runClean(options: CliOptions): Promise<number> {
     change.replacements.some((replacement) => isActionable(replacement)),
   );
 
-  writeResult(options, analysis.result, analysis.identifierFlags);
+  writeResult(options, analysis.result, analysis.identifierFlags, analysis.noScannableFiles);
 
   if (options.verbose) {
     printVerboseFiles(analysis.result.files);
@@ -232,7 +226,7 @@ async function runReport(options: CliOptions): Promise<number> {
 
 async function analyzePath(options: CliOptions): Promise<Analysis> {
   const root = resolve(options.path);
-  const analyzedFiles: AnalyzedFile[] = [];
+  const files: FileResult[] = [];
   const changes: FileChange[] = [];
   const identifierFlags: IdentifierFlag[] = [];
 
@@ -243,17 +237,27 @@ async function analyzePath(options: CliOptions): Promise<Analysis> {
   let filesWithEmoji = 0;
   let totalEmoji = 0;
 
-  for await (const relativePath of scan({ root })) {
+  for await (const relativePath of scan({ root, verbose: options.verbose })) {
     totalFiles += 1;
     const absolutePath = join(root, relativePath);
-    const content = await readFile(absolutePath, 'utf8');
-    const matches = detect(content, relativePath);
+    const loadContent = options.command === 'clean';
+    const analysis = await analyzeFile(absolutePath, relativePath, {
+      verbose: options.verbose,
+      loadContent,
+    });
+
+    if (analysis === null) {
+      totalFiles -= 1;
+      continue;
+    }
+
+    const matches = analysis.matches;
     const replacements = replace(matches, { strict: options.strict });
-    const totalChars = countNonWhitespaceCharacters(content);
+    const totalChars = analysis.totalChars;
     const emojiChars = matches.length;
     const emojiDensity = totalChars === 0 ? 0 : emojiChars / totalChars;
 
-    const result: FileResult = {
+    const fileResult: FileResult = {
       filePath: relativePath,
       matches,
       replacements,
@@ -262,11 +266,7 @@ async function analyzePath(options: CliOptions): Promise<Analysis> {
       emojiChars,
     };
 
-    analyzedFiles.push({
-      absolutePath,
-      content,
-      result,
-    });
+    files.push(fileResult);
 
     for (const match of matches) {
       byContext[match.context] += 1;
@@ -279,7 +279,7 @@ async function analyzePath(options: CliOptions): Promise<Analysis> {
         identifierFlags.push({
           filePath: relativePath,
           line: replacement.match.line,
-          snippet: formatSnippet(content, replacement.match.line),
+          snippet: formatSnippet(analysis.content, replacement.match.line, analysis.streamed),
         });
       }
     }
@@ -288,12 +288,11 @@ async function analyzePath(options: CliOptions): Promise<Analysis> {
       filesWithEmoji += 1;
     }
 
-    if (replacements.some((replacement) => isActionable(replacement))) {
-      changes.push(applyToFile(absolutePath, content, replacements));
+    if (analysis.content !== null && replacements.some((replacement) => isActionable(replacement))) {
+      changes.push(applyToFile(absolutePath, analysis.content, replacements));
     }
   }
 
-  const files = analyzedFiles.map((entry) => entry.result);
   const result: ScanResult = {
     summary: {
       totalFiles,
@@ -310,15 +309,25 @@ async function analyzePath(options: CliOptions): Promise<Analysis> {
 
   return {
     result,
-    analyzedFiles,
     changes,
     identifierFlags,
+    noScannableFiles: totalFiles === 0,
   };
 }
 
-function writeResult(options: CliOptions, result: ScanResult, identifierFlags: IdentifierFlag[]): void {
+function writeResult(
+  options: CliOptions,
+  result: ScanResult,
+  identifierFlags: IdentifierFlag[],
+  noScannableFiles: boolean,
+): void {
   if (options.json) {
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    return;
+  }
+
+  if (noScannableFiles) {
+    process.stdout.write('No scannable files found\n');
     return;
   }
 
@@ -448,19 +457,13 @@ function isActionable(replacement: Replacement): boolean {
   return replacement.action === 'replace' || replacement.action === 'remove';
 }
 
-function formatSnippet(content: string, lineNumber: number): string {
+function formatSnippet(content: string | null, lineNumber: number, streamed: boolean): string {
+  if (content === null) {
+    return streamed ? '[streamed file]' : '';
+  }
+
   const line = content.split(/\r?\n/u)[lineNumber - 1] ?? '';
   return line.trim();
-}
-
-function countNonWhitespaceCharacters(content: string): number {
-  let count = 0;
-  for (const char of content) {
-    if (!/\s/u.test(char)) {
-      count += 1;
-    }
-  }
-  return count;
 }
 
 function formatPercent(value: number): string {

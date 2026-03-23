@@ -1,6 +1,9 @@
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
 import * as path from 'node:path';
 
 import type { EmojiContext, EmojiMatch } from './types.js';
+import { readScannableTextFile } from './scanner.js';
 
 type Language =
   | 'typescript'
@@ -26,6 +29,20 @@ interface CodeRegion {
   end: number;
   type: 'comment' | 'string';
 }
+
+export interface FileDetectionResult {
+  content: string | null;
+  matches: EmojiMatch[];
+  totalChars: number;
+  streamed: boolean;
+}
+
+export interface AnalyzeFileOptions {
+  verbose?: boolean;
+  loadContent?: boolean;
+}
+
+export const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
 
 const EMOJI_ATOM =
   '(?:\\p{Regional_Indicator}{2}|[#*0-9]\\uFE0F?\\u20E3|(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic})(?:\\uFE0F)?(?:\\p{Emoji_Modifier})?)';
@@ -56,10 +73,55 @@ const LOG_PATTERNS = [
 ];
 
 export function detect(content: string, filePath = ''): EmojiMatch[] {
+  if (content === '') {
+    return [];
+  }
+
+  return analyzeContent(content, filePath).matches;
+}
+
+export async function analyzeFile(
+  filePath: string,
+  displayPath = filePath,
+  options: AnalyzeFileOptions = {},
+): Promise<FileDetectionResult | null> {
+  const fileStat = await stat(filePath);
+  const loadContent = options.loadContent ?? false;
+
+  if (fileStat.size > LARGE_FILE_THRESHOLD && !loadContent) {
+    return detectLargeFile(filePath, displayPath, options.verbose ?? false);
+  }
+
+  const content = await readScannableTextFile(filePath, displayPath, options.verbose ?? false);
+  if (content === null) {
+    return null;
+  }
+
+  const analysis = analyzeContent(content, displayPath);
+  return {
+    content: loadContent ? content : null,
+    matches: analysis.matches,
+    totalChars: analysis.totalChars,
+    streamed: false,
+  };
+}
+
+function analyzeContent(content: string, filePath = ''): { matches: EmojiMatch[]; totalChars: number } {
+  if (content === '') {
+    return { matches: [], totalChars: 0 };
+  }
+
   const language = detectLanguage(filePath);
   const regions = mapCodeRegions(content, language);
   const lineStarts = buildLineStarts(content);
   const matches: EmojiMatch[] = [];
+  let totalChars = 0;
+
+  for (const char of content) {
+    if (!/\s/u.test(char)) {
+      totalChars += 1;
+    }
+  }
 
   for (const match of content.matchAll(EMOJI_SEQUENCE_REGEX)) {
     const emoji = match[0];
@@ -82,7 +144,7 @@ export function detect(content: string, filePath = ''): EmojiMatch[] {
     });
   }
 
-  return matches;
+  return { matches, totalChars };
 }
 
 export function detectLanguage(filePath: string): Language {
@@ -259,6 +321,92 @@ function getLineColumn(offset: number, lineStarts: number[]): { line: number; co
   }
 
   return { line: 1, column: offset + 1 };
+}
+
+async function detectLargeFile(
+  filePath: string,
+  displayPath: string,
+  verbose: boolean,
+): Promise<FileDetectionResult | null> {
+  const stream = createReadStream(filePath);
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+
+  const matches: EmojiMatch[] = [];
+  let lineNumber = 0;
+  let offset = 0;
+  let totalChars = 0;
+  let pending = '';
+
+  try {
+    for await (const chunk of stream) {
+      pending += decoder.decode(chunk, { stream: true });
+
+      if (lineNumber === 0 && pending.charCodeAt(0) === 0xfeff) {
+        pending = pending.slice(1);
+      }
+
+      let newlineIndex = pending.indexOf('\n');
+      while (newlineIndex !== -1) {
+        let rawLine = pending.slice(0, newlineIndex);
+        pending = pending.slice(newlineIndex + 1);
+
+        if (rawLine.endsWith('\r')) {
+          rawLine = rawLine.slice(0, -1);
+          offset += 1;
+        }
+
+        lineNumber += 1;
+        const analysis = analyzeContent(rawLine, displayPath);
+        totalChars += analysis.totalChars;
+
+        for (const match of analysis.matches) {
+          matches.push({
+            ...match,
+            line: match.line + lineNumber - 1,
+            offset: match.offset + offset,
+          });
+        }
+
+        offset += rawLine.length + 1;
+        newlineIndex = pending.indexOf('\n');
+      }
+    }
+
+    pending += decoder.decode();
+    if (lineNumber === 0 && pending.charCodeAt(0) === 0xfeff) {
+      pending = pending.slice(1);
+    }
+
+    if (pending.length > 0) {
+      lineNumber += 1;
+      const analysis = analyzeContent(pending, displayPath);
+      totalChars += analysis.totalChars;
+
+      for (const match of analysis.matches) {
+        matches.push({
+          ...match,
+          line: match.line + lineNumber - 1,
+          offset: match.offset + offset,
+        });
+      }
+    }
+  } catch (error) {
+    if (error instanceof TypeError && /encoded data was not valid/i.test(error.message)) {
+      if (verbose) {
+        console.warn(`Skipping ${displayPath}: encoding error`);
+      }
+      return null;
+    }
+
+    throw error;
+  }
+
+  return {
+    content: null,
+    matches,
+    totalChars,
+    streamed: true,
+  };
 }
 
 function mapJsonStrings(content: string): CodeRegion[] {
