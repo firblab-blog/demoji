@@ -1,126 +1,80 @@
 # demoji
 
-`demoji` is a TypeScript CLI that scans source repositories for emoji usage, classifies each match by context, and either reports or applies policy-driven replacements.
+A TypeScript CLI that scans source repositories for emoji usage, classifies each match by context, and either reports or applies policy-driven replacements.
 
-The tool was built as a Cogit proof of concept. It exercises guidance injection, task orchestration, preflight enforcement, and auditability against a real CLI project.
+Built for cleaning up the emoji that accumulates when vibe-coding with LLMs.
 
 ## What It Does
 
-- `scan` walks a repo, finds emoji in supported text files, and prints a summary.
-- `clean` applies context-aware replacements after confirmation or `--yes`.
-- `report` generates a standalone HTML report for the scan results.
+- **`scan`** walks a repo, finds emoji in supported text files, and prints a summary.
+- **`clean`** applies context-aware replacements after confirmation or `--yes`.
+- **`report`** generates a standalone HTML report for the scan results.
 
-`demoji` follows the project guidance used during the POC:
+### Context-Aware Replacement Rules
 
-- comments become text equivalents such as `[OK]` or `[WARN]`
-- log-statement emoji are removed
-- string-literal emoji are preserved by default and replaced only with `--strict`
-- identifier emoji are flagged for manual review and never auto-replaced
+demoji classifies every emoji it finds into one of five contexts, and each context has its own replacement strategy:
+
+| Context | Strategy | Example |
+|---------|----------|---------|
+| **Comment** | Replace with text equivalent | `// ✅ done` → `// [OK] done` |
+| **Log statement** | Remove entirely | `console.log("🚀 starting")` → `console.log(" starting")` |
+| **String literal** | Preserve (replace with `--strict`) | `"Hello 👋"` stays as-is |
+| **Identifier** | Flag for manual review, never auto-replace | `const 🚀launch = true` |
+| **Other** | Replace with text equivalent | `🔥` → `[HOT]` |
 
 ## Installation
 
-This repository is intended to be run locally:
-
 ```bash
+git clone https://github.com/firblab-blog/demoji.git && cd demoji
 npm install
 npm run build
+npm link  # optional: makes `demoji` available globally
 ```
 
-Run the compiled CLI directly:
-
-```bash
-node dist/index.js --help
-```
-
-If you want a local `demoji` command while developing, you can use `npm link`.
+Requires Node.js 22 or later. Zero runtime dependencies.
 
 ## Usage
 
 ```bash
-node dist/index.js scan .
-node dist/index.js clean . --dry-run
-node dist/index.js clean . --yes
-node dist/index.js report . --output demoji-report.html
-```
+# Scan a repo for emoji
+demoji scan .
 
-Help output:
+# Scan with verbose per-file details
+demoji scan src --verbose
 
-```text
-Usage:
-  demoji scan [path] [--strict] [--json] [--verbose]
-  demoji clean [path] [--strict] [--yes] [--json] [--verbose] [--dry-run]
-  demoji report [path] [--strict] [--output <file>]
-  demoji help
-```
+# Machine-readable JSON output
+demoji scan . --json
 
-## Subcommands
+# Preview what clean would change
+demoji clean . --dry-run
 
-### `scan`
+# Apply changes (creates a backup branch first)
+demoji clean . --yes
 
-Scans the target directory and prints a terminal summary. No files are modified.
-
-Examples:
-
-```bash
-node dist/index.js scan .
-node dist/index.js scan src --strict --verbose
-node dist/index.js scan . --json
-```
-
-### `clean`
-
-Scans the target directory, shows the same summary, and writes changes only when the run is confirmed or `--yes` is set. Before modifying files, `demoji` creates a backup branch named `demoji/backup-<timestamp>`.
-
-Examples:
-
-```bash
-node dist/index.js clean .
-node dist/index.js clean . --yes
-node dist/index.js clean . --dry-run --verbose
-```
-
-### `report`
-
-Scans the target directory and writes a self-contained HTML report.
-
-Examples:
-
-```bash
-node dist/index.js report .
-node dist/index.js report . --output /tmp/demoji-report.html
+# Generate an HTML report
+demoji report . --output report.html
 ```
 
 ## Flags
 
-### `--strict`
+| Flag | Description |
+|------|-------------|
+| `--strict` | Also replace emoji inside string literals |
+| `--yes` | Skip confirmation prompt for `clean` |
+| `--json` | Print machine-readable JSON output |
+| `--dry-run` | Preview `clean` changes without writing files |
+| `--verbose` | Show per-file detail and planned diffs |
+| `--output <file>` | Set destination for `report` (default: `demoji-report.html`) |
 
-Also replaces emoji inside string literals. Without this flag, string-literal emoji are preserved.
+## Supported File Types
 
-### `--yes`
+`.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` `.py` `.rb` `.go` `.rs` `.java` `.kt` `.swift` `.c` `.cpp` `.h` `.cs` `.md` `.yaml` `.yml` `.json` `.toml`
 
-Skips the confirmation prompt for `clean`.
-
-### `--json`
-
-Prints machine-readable JSON instead of the human-readable terminal summary.
-
-### `--dry-run`
-
-Available on `clean`. Shows what would change without writing files.
-
-### `--verbose`
-
-Prints additional per-file detail, and for `clean` it also shows planned diffs.
-
-### `--output <file>`
-
-Available on `report`. Chooses the destination HTML file path. Defaults to `demoji-report.html`.
+Automatically skips `node_modules`, `.git`, `dist`, `build`, `out`, `vendor`, `__pycache__`, `.next`, `.nuxt`, `coverage`, and `.nyc_output`. Respects `.gitignore` patterns. Detects and skips binary files.
 
 ## Example Output
 
-Example `scan` output against the included `tests/fixtures/emoji-heavy` fixture:
-
-```text
+```
 demoji scan results for tests/fixtures/emoji-heavy
 
 Summary:
@@ -142,11 +96,24 @@ Summary:
     Flag:        4
 ```
 
+## How It Works
+
+demoji uses Unicode properties (`\p{Emoji_Presentation}` and `\p{Extended_Pictographic}`) for detection — no hardcoded emoji lists. It parses code regions (comments, strings, template literals) for each supported language to classify context accurately, including Python docstrings, Ruby block comments, and nested JS template expressions.
+
+For files over 5 MB, it streams line-by-line instead of loading into memory.
+
+The `clean` command creates a git backup branch (`demoji/backup-<timestamp>`) before writing any changes, and all modifications are reversible via `git checkout`.
+
 ## Development
 
 ```bash
-npm run build
-npm test
+npm run build     # compile TypeScript
+npm test          # build + run test suite
+npm run typecheck # type-check without emitting
 ```
 
-The project uses Node.js built-ins only at runtime, TypeScript in strict mode, and the Node.js test runner for validation.
+Uses the Node.js built-in test runner (`node:test`) and assertions (`node:assert`). No test framework dependencies.
+
+## License
+
+ISC
