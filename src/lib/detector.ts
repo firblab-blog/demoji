@@ -3,7 +3,7 @@ import { stat } from 'node:fs/promises';
 import * as path from 'node:path';
 
 import type { EmojiContext, EmojiMatch } from './types.js';
-import { readScannableTextFile } from './scanner.js';
+import { isEncodingError, readScannableTextFile, stripBom } from './scanner.js';
 
 type Language =
   | 'typescript'
@@ -392,8 +392,8 @@ async function detectLargeFile(
     for await (const chunk of stream) {
       pending += decoder.decode(chunk, { stream: true });
 
-      if (lineNumber === 0 && pending.codePointAt(0) === 0xfeff) {
-        pending = pending.slice(1);
+      if (lineNumber === 0) {
+        pending = stripBom(pending);
       }
 
       let newlineIndex = pending.indexOf('\n');
@@ -417,8 +417,8 @@ async function detectLargeFile(
     }
 
     pending += decoder.decode();
-    if (lineNumber === 0 && pending.codePointAt(0) === 0xfeff) {
-      pending = pending.slice(1);
+    if (lineNumber === 0) {
+      pending = stripBom(pending);
     }
 
     if (pending.length > 0) {
@@ -428,7 +428,7 @@ async function detectLargeFile(
       matches.push(...result.matches);
     }
   } catch (error) {
-    if (error instanceof TypeError && /encoded data was not valid/i.test(error.message)) {
+    if (isEncodingError(error)) {
       if (verbose) {
         console.warn(`Skipping ${displayPath}: encoding error`);
       }

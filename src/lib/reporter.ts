@@ -773,9 +773,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function escapeHtml(str: string): string {
   return str
-    .replaceAll(/&/gu, '&amp;')
-    .replaceAll(/</gu, '&lt;')
-    .replaceAll(/>/gu, '&gt;')
-    .replaceAll(/"/gu, '&quot;')
-    .replaceAll(/'/gu, '&#039;');
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }

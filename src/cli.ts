@@ -12,7 +12,7 @@ import { createInterface } from 'node:readline';
  */
 const GIT_PATH = (() => {
   const candidates = process.platform === 'win32'
-    ? ['C:\\Program Files\\Git\\cmd\\git.exe', 'C:\\Program Files (x86)\\Git\\cmd\\git.exe']
+    ? [String.raw`C:\Program Files\Git\cmd\git.exe`, String.raw`C:\Program Files (x86)\Git\cmd\git.exe`]
     : ['/usr/bin/git', '/usr/local/bin/git', '/opt/homebrew/bin/git'];
 
   for (const candidate of candidates) {
@@ -96,6 +96,52 @@ function parseValueFlag(
   return null;
 }
 
+interface ArgAdvance {
+  skip: number;
+  terminal?: CliOptions;
+}
+
+function parseNextArg(
+  args: string[],
+  index: number,
+  options: CliOptions,
+): ArgAdvance {
+  const arg = args[index];
+
+  if (arg === undefined) {
+    return { skip: 1 };
+  }
+
+  if (arg === '--help' || arg === '-h') {
+    return { skip: 0, terminal: { ...options, command: 'help' } };
+  }
+
+  const boolKey = BOOLEAN_FLAGS[arg];
+  if (boolKey !== undefined) {
+    options[boolKey] = true;
+    return { skip: 1 };
+  }
+
+  for (const flagName of VALUE_FLAGS) {
+    const parsed = parseValueFlag(args, index, flagName);
+    if (parsed !== null) {
+      options[flagName] = parsed.value;
+      return { skip: 1 + parsed.skip };
+    }
+  }
+
+  if (arg.startsWith('-')) {
+    throw new Error(`Unknown flag: ${arg}`);
+  }
+
+  if (options.path !== '.') {
+    throw new Error(`Unexpected argument: ${arg}`);
+  }
+
+  options.path = arg;
+  return { skip: 1 };
+}
+
 export function parseArgs(argv: string[]): CliOptions {
   const args = argv.slice(2);
   const defaults: CliOptions = {
@@ -126,49 +172,11 @@ export function parseArgs(argv: string[]): CliOptions {
   let index = 1;
 
   while (index < args.length) {
-    const arg = args[index];
-
-    if (arg === undefined) {
-      index += 1;
-      continue;
+    const result = parseNextArg(args, index, options);
+    if (result.terminal !== undefined) {
+      return result.terminal;
     }
-
-    if (arg === '--help' || arg === '-h') {
-      return { ...options, command: 'help' };
-    }
-
-    const boolKey = BOOLEAN_FLAGS[arg];
-    if (boolKey !== undefined) {
-      options[boolKey] = true;
-      index += 1;
-      continue;
-    }
-
-    let matched = false;
-    for (const flagName of VALUE_FLAGS) {
-      const parsed = parseValueFlag(args, index, flagName);
-      if (parsed !== null) {
-        options[flagName] = parsed.value;
-        index += 1 + parsed.skip;
-        matched = true;
-        break;
-      }
-    }
-
-    if (matched) {
-      continue;
-    }
-
-    if (arg.startsWith('-')) {
-      throw new Error(`Unknown flag: ${arg}`);
-    }
-
-    if (options.path !== '.') {
-      throw new Error(`Unexpected argument: ${arg}`);
-    }
-
-    options.path = arg;
-    index += 1;
+    index += result.skip;
   }
 
   return options;

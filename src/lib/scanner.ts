@@ -91,6 +91,49 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
 
   yield* walkDirectory(root, 0, []);
 
+  async function* processEntry(
+    entry: import('node:fs').Dirent,
+    directoryPath: string,
+    depth: number,
+    contexts: IgnoreContext[],
+  ): AsyncGenerator<string> {
+    const fullPath = join(directoryPath, entry.name);
+    const relativePath = normalizePath(relative(root, fullPath));
+
+    if (!relativePath || relativePath.startsWith('../')) {
+      return;
+    }
+
+    if (ALWAYS_SKIP.has(entry.name)) {
+      return;
+    }
+
+    if (shouldIgnore(relativePath, contexts)) {
+      return;
+    }
+
+    const kind = await resolveEntryKind(entry, fullPath);
+
+    if (kind === 'directory') {
+      yield* walkDirectory(fullPath, depth + 1, contexts);
+      return;
+    }
+
+    if (kind === 'skip') {
+      return;
+    }
+
+    if (!extensions.has(extname(entry.name).toLowerCase())) {
+      return;
+    }
+
+    if (await isBinaryFile(fullPath)) {
+      return;
+    }
+
+    yield relativePath;
+  }
+
   async function* walkDirectory(
     directoryPath: string,
     depth: number,
@@ -124,41 +167,7 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
     const entries = await readdir(directoryPath, { withFileTypes: true });
 
     for (const entry of entries) {
-      const fullPath = join(directoryPath, entry.name);
-      const relativePath = normalizePath(relative(root, fullPath));
-
-      if (!relativePath || relativePath.startsWith('../')) {
-        continue;
-      }
-
-      if (ALWAYS_SKIP.has(entry.name)) {
-        continue;
-      }
-
-      if (shouldIgnore(relativePath, contexts)) {
-        continue;
-      }
-
-      const kind = await resolveEntryKind(entry, fullPath);
-
-      if (kind === 'directory') {
-        yield* walkDirectory(fullPath, depth + 1, contexts);
-        continue;
-      }
-
-      if (kind === 'skip') {
-        continue;
-      }
-
-      if (!extensions.has(extname(entry.name).toLowerCase())) {
-        continue;
-      }
-
-      if (await isBinaryFile(fullPath)) {
-        continue;
-      }
-
-      yield relativePath;
+      yield* processEntry(entry, directoryPath, depth, contexts);
     }
   }
 }
@@ -391,7 +400,7 @@ function stripTrailingSlash(value: string): string {
 }
 
 function normalizePath(value: string): string {
-  return value.replaceAll(/\\/gu, '/');
+  return value.replaceAll('\\', '/');
 }
 
 function normalizeRelativePath(root: string, target: string): string {
@@ -411,4 +420,4 @@ function stripBom(content: string): string {
   return content.codePointAt(0) === 0xfeff ? content.slice(1) : content;
 }
 
-export { ALWAYS_SKIP, SUPPORTED_EXTENSIONS, isBinaryFile, isIgnored, parseGitignore };
+export { ALWAYS_SKIP, SUPPORTED_EXTENSIONS, isBinaryFile, isEncodingError, isIgnored, parseGitignore, stripBom };
