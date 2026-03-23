@@ -27,8 +27,10 @@ interface CodeRegion {
   type: 'comment' | 'string';
 }
 
-const EMOJI_SEQUENCE_REGEX =
-  /(?:\p{Regional_Indicator}{2}|(?:\p{Emoji_Presentation}|\p{Extended_Pictographic})(?:\uFE0F)?(?:\p{Emoji_Modifier})?)(?:\u200D(?:\p{Regional_Indicator}{2}|(?:\p{Emoji_Presentation}|\p{Extended_Pictographic})(?:\uFE0F)?(?:\p{Emoji_Modifier})?))*/gu;
+const EMOJI_ATOM =
+  '(?:\\p{Regional_Indicator}{2}|[#*0-9]\\uFE0F?\\u20E3|(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic})(?:\\uFE0F)?(?:\\p{Emoji_Modifier})?)';
+
+const EMOJI_SEQUENCE_REGEX = new RegExp(`${EMOJI_ATOM}(?:\\u200D${EMOJI_ATOM})*`, 'gu');
 
 const C_STYLE_LANGUAGES = new Set<Language>([
   'typescript',

@@ -19,13 +19,16 @@ test('detect handles multi-codepoint emoji as single matches', () => {
   const family = detect('// 👨‍👩‍👧‍👦 family', 'sample.ts');
   const wave = detect('// 👋🏽 wave', 'sample.ts');
   const flag = detect('// 🇺🇸 flag', 'sample.ts');
+  const keycap = detect('// #️⃣ keycap', 'sample.ts');
 
   assert.equal(family.length, 1);
   assert.equal(wave.length, 1);
   assert.equal(flag.length, 1);
+  assert.equal(keycap.length, 1);
   assert.equal(family[0]?.context, 'COMMENT');
   assert.equal(wave[0]?.context, 'COMMENT');
   assert.equal(flag[0]?.context, 'COMMENT');
+  assert.equal(keycap[0]?.context, 'COMMENT');
 });
 
 test('detect handles multiple emoji on the same line', () => {
