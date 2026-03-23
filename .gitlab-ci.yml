@@ -122,11 +122,14 @@ sonarqube:analyze:
   extends: .sonarqube-analysis
   before_script:
     - npm ci --cache .npm --prefer-offline --no-audit
+    - npm run build
     - mkdir -p coverage
     - >-
       node --test --experimental-strip-types --experimental-test-coverage
       --test-reporter=lcov --test-reporter-destination=coverage/lcov.info
       tests/*.test.ts || true
+    # Remap LCOV paths from dist/*.js → src/*.ts so SonarQube matches sources
+    - sed -i 's|^SF:dist/|SF:src/|; s|\.js$|.ts|' coverage/lcov.info
   rules:
     # MR pipelines: analyze with PR decoration
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_HOST_URL && $SONAR_TOKEN
