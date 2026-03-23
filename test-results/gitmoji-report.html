@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>demoji report - /sessions/friendly-admiring-cori/test-repos/gitmoji</title>
+  <style>
+:root {
+  color-scheme: light dark;
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --panel-border: #d6deeb;
+  --text: #162033;
+  --muted: #607089;
+  --shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  --comment: #2563eb;
+  --string-literal: #16a34a;
+  --log-statement: #ea580c;
+  --identifier: #dc2626;
+  --other: #6b7280;
+  --density-low-bg: #dcfce7;
+  --density-low-text: #166534;
+  --density-medium-bg: #fef3c7;
+  --density-medium-text: #92400e;
+  --density-high-bg: #fee2e2;
+  --density-high-text: #991b1b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --panel: #111827;
+    --panel-border: #243046;
+    --text: #e5edf8;
+    --muted: #9fb0c8;
+    --shadow: 0 22px 46px rgba(2, 6, 23, 0.45);
+    --comment: #60a5fa;
+    --string-literal: #4ade80;
+    --log-statement: #fb923c;
+    --identifier: #f87171;
+    --other: #9ca3af;
+    --density-low-bg: rgba(34, 197, 94, 0.18);
+    --density-low-text: #86efac;
+    --density-medium-bg: rgba(245, 158, 11, 0.2);
+    --density-medium-text: #fcd34d;
+    --density-high-bg: rgba(239, 68, 68, 0.22);
+    --density-high-text: #fca5a5;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), transparent 260px), var(--bg);
+  color: var(--text);
+}
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+h2 {
+  font-size: 1.2rem;
+}
+
+.subtle,
+.summary-label,
+.footer {
+  color: var(--muted);
+}
+
+.hero-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.hero-meta div {
+  padding: 14px 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+}
+
+.hero-meta dt {
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.hero-meta dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.summary-card {
+  padding: 20px;
+}
+
+.summary-label {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+}
+
+.summary-value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.section-heading-stack {
+  align-items: flex-end;
+}
+
+.context-bar {
+  display: flex;
+  overflow: hidden;
+  min-height: 22px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.context-empty {
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.context-segment {
+  min-width: 0;
+}
+
+.context-comment {
+  background: var(--comment);
+}
+
+.context-string_literal {
+  background: var(--string-literal);
+}
+
+.context-log_statement {
+  background: var(--log-statement);
+}
+
+.context-identifier {
+  background: var(--identifier);
+}
+
+.context-other {
+  background: var(--other);
+}
+
+.context-legend {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 18px 0 0;
+  list-style: none;
+}
+
+.context-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.context-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 14px 12px;
+  border-top: 1px solid var(--panel-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  border-top: 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sort-indicator {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.file-path {
+  word-break: break-word;
+}
+
+.badge-row,
+.action-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  font-size: 0.84rem;
+}
+
+.badge-comment {
+  border-color: color-mix(in srgb, var(--comment) 35%, var(--panel-border));
+  color: var(--comment);
+}
+
+.badge-string_literal {
+  border-color: color-mix(in srgb, var(--string-literal) 35%, var(--panel-border));
+  color: var(--string-literal);
+}
+
+.badge-log_statement {
+  border-color: color-mix(in srgb, var(--log-statement) 35%, var(--panel-border));
+  color: var(--log-statement);
+}
+
+.badge-identifier {
+  border-color: color-mix(in srgb, var(--identifier) 35%, var(--panel-border));
+  color: var(--identifier);
+}
+
+.badge-other {
+  border-color: color-mix(in srgb, var(--other) 35%, var(--panel-border));
+  color: var(--other);
+}
+
+.density-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+}
+
+.density-low {
+  background: var(--density-low-bg);
+  color: var(--density-low-text);
+}
+
+.density-medium {
+  background: var(--density-medium-bg);
+  color: var(--density-medium-text);
+}
+
+.density-high {
+  background: var(--density-high-bg);
+  color: var(--density-high-text);
+}
+
+.search {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 280px);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.search input {
+  width: 100%;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+.empty-state {
+  color: var(--muted);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  font-size: 0.92rem;
+}
+
+section.panel {
+  margin-top: 20px;
+  padding: 24px;
+}
+
+@media (max-width: 860px) {
+  .hero,
+  .hero-meta,
+  .summary-grid,
+  .context-legend {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero {
+    flex-direction: column;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .context-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 14px 32px;
+  }
+
+  section.panel,
+  .hero {
+    padding: 18px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .context-legend,
+  .hero-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footer {
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="panel hero">
+    <div>
+      <p class="eyebrow">demoji Scan Report</p>
+      <h1>Scan results for /sessions/friendly-admiring-cori/test-repos/gitmoji</h1>
+      <p class="subtle">Generated Mar 23, 2026, 10:19:59 AM</p>
+    </div>
+    <dl class="hero-meta">
+      <div>
+        <dt>Mode</dt>
+        <dd>Default</dd>
+      </div>
+      <div>
+        <dt>Files with emoji</dt>
+        <dd>17</dd>
+      </div>
+    </dl>
+  </header>
+    <section class="summary-grid" aria-label="Summary">
+    <article class="panel summary-card">
+    <p class="summary-label">Total files scanned</p>
+    <p class="summary-value">92</p>
+  </article>
+    <article class="panel summary-card">
+    <p class="summary-label">Files with emoji</p>
+    <p class="summary-value">17</p>
+  </article>
+    <article class="panel summary-card">
+    <p class="summary-label">Total emoji found</p>
+    <p class="summary-value">135</p>
+  </article>
+    <article class="panel summary-card">
+    <p class="summary-label">Average density</p>
+    <p class="summary-value">0.1%</p>
+  </article>
+  </section>
+    <section class="panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Context breakdown</p>
+        <h2>Where emoji were found</h2>
+      </div>
+    </div>
+    <div class="context-bar" role="img" aria-label="Emoji context distribution">
+      <div class="context-segment context-comment" style="width:2.96%" title="Comment: 4"></div><div class="context-segment context-string_literal" style="width:60.00%" title="String: 81"></div><div class="context-segment context-log_statement" style="width:0.00%" title="Log: 0"></div><div class="context-segment context-identifier" style="width:0.00%" title="Identifier: 0"></div><div class="context-segment context-other" style="width:37.04%" title="Other: 50"></div>
+    </div>
+    <ul class="context-legend">
+      <li class="context-legend-item">
+      <span class="context-dot context-comment"></span>
+      <span>Comment</span>
+      <strong>4</strong>
+    </li><li class="context-legend-item">
+      <span class="context-dot context-string_literal"></span>
+      <span>String</span>
+      <strong>81</strong>
+    </li><li class="context-legend-item">
+      <span class="context-dot context-log_statement"></span>
+      <span>Log</span>
+      <strong>0</strong>
+    </li><li class="context-legend-item">
+      <span class="context-dot context-identifier"></span>
+      <span>Identifier</span>
+      <strong>0</strong>
+    </li><li class="context-legend-item">
+      <span class="context-dot context-other"></span>
+      <span>Other</span>
+      <strong>50</strong>
+    </li>
+    </ul>
+  </section>
+    <section class="panel">
+    <div class="section-heading section-heading-stack">
+      <div>
+        <p class="eyebrow">File breakdown</p>
+        <h2>Files with scan details</h2>
+      </div>
+      <label class="search">
+        <span>Filter by path</span>
+        <input id="report-filter" type="search" placeholder="Search file paths" oninput="filterTable(this.value)">
+      </label>
+    </div>
+    <div class="table-wrap">
+      <table id="report-table">
+        <thead>
+          <tr>
+            <th scope="col">
+              <button type="button" class="sort-button" onclick="sortTable(0)">File path <span class="sort-indicator"></span></button>
+            </th>
+            <th scope="col">
+              <button type="button" class="sort-button" onclick="sortTable(1)">Emoji count <span class="sort-indicator"></span></button>
+            </th>
+            <th scope="col">
+              <button type="button" class="sort-button" onclick="sortTable(2)">Density <span class="sort-indicator"></span></button>
+            </th>
+            <th scope="col">
+              <button type="button" class="sort-button" onclick="sortTable(3)">Contexts found <span class="sort-indicator"></span></button>
+            </th>
+            <th scope="col">
+              <button type="button" class="sort-button" onclick="sortTable(4)">Actions <span class="sort-indicator"></span></button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="file-row" data-path=".github/contributing.md">
+    <td data-sort=".github/contributing.md">
+      <span class="file-path">.github/CONTRIBUTING.md</span>
+    </td>
+    <td data-sort="1">
+      1
+    </td>
+    <td class="density-cell" data-sort="0.0004923682914820286">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="1,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 1</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/funding.yml">
+    <td data-sort=".github/funding.yml">
+      <span class="file-path">.github/FUNDING.yml</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/issue_template/bug-report.yml">
+    <td data-sort=".github/issue_template/bug-report.yml">
+      <span class="file-path">.github/ISSUE_TEMPLATE/bug-report.yml</span>
+    </td>
+    <td data-sort="1">
+      1
+    </td>
+    <td class="density-cell" data-sort="0.0006648936170212766">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.1%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="1,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 1</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/issue_template/config.yml">
+    <td data-sort=".github/issue_template/config.yml">
+      <span class="file-path">.github/ISSUE_TEMPLATE/config.yml</span>
+    </td>
+    <td data-sort="1">
+      1
+    </td>
+    <td class="density-cell" data-sort="0.0045871559633027525">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.5%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="1,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 1</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/issue_template/discussion.yml">
+    <td data-sort=".github/issue_template/discussion.yml">
+      <span class="file-path">.github/ISSUE_TEMPLATE/discussion.yml</span>
+    </td>
+    <td data-sort="1">
+      1
+    </td>
+    <td class="density-cell" data-sort="0.0012706480304955528">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.1%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="1,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 1</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/issue_template/feature-request.yml">
+    <td data-sort=".github/issue_template/feature-request.yml">
+      <span class="file-path">.github/ISSUE_TEMPLATE/feature-request.yml</span>
+    </td>
+    <td data-sort="1">
+      1
+    </td>
+    <td class="density-cell" data-sort="0.0008006405124099279">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.1%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="1,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 1</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/issue_template/gitmoji-proposal.yml">
+    <td data-sort=".github/issue_template/gitmoji-proposal.yml">
+      <span class="file-path">.github/ISSUE_TEMPLATE/gitmoji-proposal.yml</span>
+    </td>
+    <td data-sort="4">
+      4
+    </td>
+    <td class="density-cell" data-sort="0.0016806722689075631">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.2%
+      </span>
+    </td>
+    <td data-sort="STRING_LITERAL,OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-string_literal">String</span><span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="1,0,3,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 1</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 3</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/pull_request_template.md">
+    <td data-sort=".github/pull_request_template.md">
+      <span class="file-path">.github/PULL_REQUEST_TEMPLATE.md</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/dependabot.yml">
+    <td data-sort=".github/dependabot.yml">
+      <span class="file-path">.github/dependabot.yml</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/workflows/ci.yml">
+    <td data-sort=".github/workflows/ci.yml">
+      <span class="file-path">.github/workflows/ci.yml</span>
+    </td>
+    <td data-sort="4">
+      4
+    </td>
+    <td class="density-cell" data-sort="0.008733624454148471">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.9%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="4,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 4</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/workflows/lock.yml">
+    <td data-sort=".github/workflows/lock.yml">
+      <span class="file-path">.github/workflows/lock.yml</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".github/workflows/npm-publish.yml">
+    <td data-sort=".github/workflows/npm-publish.yml">
+      <span class="file-path">.github/workflows/npm-publish.yml</span>
+    </td>
+    <td data-sort="4">
+      4
+    </td>
+    <td class="density-cell" data-sort="0.007722007722007722">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.8%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="4,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 4</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path=".lintstagedrc.json">
+    <td data-sort=".lintstagedrc.json">
+      <span class="file-path">.lintstagedrc.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="agents.md">
+    <td data-sort="agents.md">
+      <span class="file-path">AGENTS.md</span>
+    </td>
+    <td data-sort="10">
+      10
+    </td>
+    <td class="density-cell" data-sort="0.004892367906066536">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.5%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="10,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 10</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="readme.md">
+    <td data-sort="readme.md">
+      <span class="file-path">README.md</span>
+    </td>
+    <td data-sort="5">
+      5
+    </td>
+    <td class="density-cell" data-sort="0.002109704641350211">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.2%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="5,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 5</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="package.json">
+    <td data-sort="package.json">
+      <span class="file-path">package.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/gitmojis/.lintstagedrc.json">
+    <td data-sort="packages/gitmojis/.lintstagedrc.json">
+      <span class="file-path">packages/gitmojis/.lintstagedrc.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/gitmojis/readme.md">
+    <td data-sort="packages/gitmojis/readme.md">
+      <span class="file-path">packages/gitmojis/README.md</span>
+    </td>
+    <td data-sort="6">
+      6
+    </td>
+    <td class="density-cell" data-sort="0.004467609828741623">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.4%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="6,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 6</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/gitmojis/package.json">
+    <td data-sort="packages/gitmojis/package.json">
+      <span class="file-path">packages/gitmojis/package.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/gitmojis/src/gitmojis.json">
+    <td data-sort="packages/gitmojis/src/gitmojis.json">
+      <span class="file-path">packages/gitmojis/src/gitmojis.json</span>
+    </td>
+    <td data-sort="77">
+      77
+    </td>
+    <td class="density-cell" data-sort="0.0076609292607700726">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.8%
+      </span>
+    </td>
+    <td data-sort="STRING_LITERAL">
+      <div class="badge-row">
+        <span class="badge badge-context badge-string_literal">String</span>
+      </div>
+    </td>
+    <td data-sort="0,0,77,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 77</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/gitmojis/src/index.d.ts">
+    <td data-sort="packages/gitmojis/src/index.d.ts">
+      <span class="file-path">packages/gitmojis/src/index.d.ts</span>
+    </td>
+    <td data-sort="4">
+      4
+    </td>
+    <td class="density-cell" data-sort="0.006369426751592357">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.6%
+      </span>
+    </td>
+    <td data-sort="COMMENT">
+      <div class="badge-row">
+        <span class="badge badge-context badge-comment">Comment</span>
+      </div>
+    </td>
+    <td data-sort="4,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 4</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/gitmojis/src/index.js">
+    <td data-sort="packages/gitmojis/src/index.js">
+      <span class="file-path">packages/gitmojis/src/index.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/gitmojis/src/schema.json">
+    <td data-sort="packages/gitmojis/src/schema.json">
+      <span class="file-path">packages/gitmojis/src/schema.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/.lintstagedrc.json">
+    <td data-sort="packages/website/.lintstagedrc.json">
+      <span class="file-path">packages/website/.lintstagedrc.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/__mocks__/svg.js">
+    <td data-sort="packages/website/__mocks__/svg.js">
+      <span class="file-path">packages/website/__mocks__/svg.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/eslint.config.mjs">
+    <td data-sort="packages/website/eslint.config.mjs">
+      <span class="file-path">packages/website/eslint.config.mjs</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/jest.config.js">
+    <td data-sort="packages/website/jest.config.js">
+      <span class="file-path">packages/website/jest.config.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/jest.d.ts">
+    <td data-sort="packages/website/jest.d.ts">
+      <span class="file-path">packages/website/jest.d.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/jest.setup.js">
+    <td data-sort="packages/website/jest.setup.js">
+      <span class="file-path">packages/website/jest.setup.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/jsconfig.json">
+    <td data-sort="packages/website/jsconfig.json">
+      <span class="file-path">packages/website/jsconfig.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/next-env.d.ts">
+    <td data-sort="packages/website/next-env.d.ts">
+      <span class="file-path">packages/website/next-env.d.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/next-sitemap.config.js">
+    <td data-sort="packages/website/next-sitemap.config.js">
+      <span class="file-path">packages/website/next-sitemap.config.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/next-sitemap.js">
+    <td data-sort="packages/website/next-sitemap.js">
+      <span class="file-path">packages/website/next-sitemap.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/next.config.js">
+    <td data-sort="packages/website/next.config.js">
+      <span class="file-path">packages/website/next.config.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/package.json">
+    <td data-sort="packages/website/package.json">
+      <span class="file-path">packages/website/package.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/public/static/manifest.json">
+    <td data-sort="packages/website/public/static/manifest.json">
+      <span class="file-path">packages/website/public/static/manifest.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/scripts/generate-api.js">
+    <td data-sort="packages/website/scripts/generate-api.js">
+      <span class="file-path">packages/website/scripts/generate-api.js</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/__tests__/pages.spec.tsx">
+    <td data-sort="packages/website/src/__tests__/pages.spec.tsx">
+      <span class="file-path">packages/website/src/__tests__/pages.spec.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/__tests__/stubs.tsx">
+    <td data-sort="packages/website/src/__tests__/stubs.tsx">
+      <span class="file-path">packages/website/src/__tests__/stubs.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/app/about/page.tsx">
+    <td data-sort="packages/website/src/app/about/page.tsx">
+      <span class="file-path">packages/website/src/app/about/page.tsx</span>
+    </td>
+    <td data-sort="2">
+      2
+    </td>
+    <td class="density-cell" data-sort="0.0008097165991902834">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.1%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="2,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 2</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/app/contributors/page.tsx">
+    <td data-sort="packages/website/src/app/contributors/page.tsx">
+      <span class="file-path">packages/website/src/app/contributors/page.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/app/layout.tsx">
+    <td data-sort="packages/website/src/app/layout.tsx">
+      <span class="file-path">packages/website/src/app/layout.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/app/page.tsx">
+    <td data-sort="packages/website/src/app/page.tsx">
+      <span class="file-path">packages/website/src/app/page.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/app/related-tools/page.tsx">
+    <td data-sort="packages/website/src/app/related-tools/page.tsx">
+      <span class="file-path">packages/website/src/app/related-tools/page.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/app/specification/page.tsx">
+    <td data-sort="packages/website/src/app/specification/page.tsx">
+      <span class="file-path">packages/website/src/app/specification/page.tsx</span>
+    </td>
+    <td data-sort="12">
+      12
+    </td>
+    <td class="density-cell" data-sort="0.0048484848484848485">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.5%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="12,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 12</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/button/__tests__/button.spec.tsx">
+    <td data-sort="packages/website/src/components/button/__tests__/button.spec.tsx">
+      <span class="file-path">packages/website/src/components/Button/__tests__/button.spec.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/button/__tests__/stubs.ts">
+    <td data-sort="packages/website/src/components/button/__tests__/stubs.ts">
+      <span class="file-path">packages/website/src/components/Button/__tests__/stubs.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/button/index.tsx">
+    <td data-sort="packages/website/src/components/button/index.tsx">
+      <span class="file-path">packages/website/src/components/Button/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/carbonad/__tests__/carbonad.spec.tsx">
+    <td data-sort="packages/website/src/components/carbonad/__tests__/carbonad.spec.tsx">
+      <span class="file-path">packages/website/src/components/CarbonAd/__tests__/carbonAd.spec.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/carbonad/index.tsx">
+    <td data-sort="packages/website/src/components/carbonad/index.tsx">
+      <span class="file-path">packages/website/src/components/CarbonAd/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/contributorslist/contributor/index.tsx">
+    <td data-sort="packages/website/src/components/contributorslist/contributor/index.tsx">
+      <span class="file-path">packages/website/src/components/ContributorsList/Contributor/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/contributorslist/__tests__/contributorslist.spec.tsx">
+    <td data-sort="packages/website/src/components/contributorslist/__tests__/contributorslist.spec.tsx">
+      <span class="file-path">packages/website/src/components/ContributorsList/__tests__/contributorsList.spec.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/contributorslist/__tests__/stubs.ts">
+    <td data-sort="packages/website/src/components/contributorslist/__tests__/stubs.ts">
+      <span class="file-path">packages/website/src/components/ContributorsList/__tests__/stubs.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/contributorslist/index.tsx">
+    <td data-sort="packages/website/src/components/contributorslist/index.tsx">
+      <span class="file-path">packages/website/src/components/ContributorsList/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/gitmoji/index.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/gitmoji/index.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/Gitmoji/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/searchparamssync.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/searchparamssync.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/SearchParamsSync.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/toolbar/kbd/index.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/toolbar/kbd/index.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/Toolbar/Kbd/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/toolbar/listmodeselector/index.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/toolbar/listmodeselector/index.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/Toolbar/ListModeSelector/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/toolbar/themeselector/index.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/toolbar/themeselector/index.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/Toolbar/ThemeSelector/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/toolbar/index.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/toolbar/index.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/Toolbar/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/__tests__/gitmojilist.spec.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/__tests__/gitmojilist.spec.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/__tests__/gitmojiList.spec.tsx</span>
+    </td>
+    <td data-sort="1">
+      1
+    </td>
+    <td class="density-cell" data-sort="0.0003405994550408719">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="STRING_LITERAL">
+      <div class="badge-row">
+        <span class="badge badge-context badge-string_literal">String</span>
+      </div>
+    </td>
+    <td data-sort="0,0,1,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 1</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/__tests__/stubs.ts">
+    <td data-sort="packages/website/src/components/gitmojilist/__tests__/stubs.ts">
+      <span class="file-path">packages/website/src/components/GitmojiList/__tests__/stubs.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/emojicolorsmap.ts">
+    <td data-sort="packages/website/src/components/gitmojilist/emojicolorsmap.ts">
+      <span class="file-path">packages/website/src/components/GitmojiList/emojiColorsMap.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/hooks/__tests__/stubs.ts">
+    <td data-sort="packages/website/src/components/gitmojilist/hooks/__tests__/stubs.ts">
+      <span class="file-path">packages/website/src/components/GitmojiList/hooks/__tests__/stubs.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/hooks/__tests__/uselocalstorage.spec.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/hooks/__tests__/uselocalstorage.spec.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/hooks/__tests__/useLocalStorage.spec.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/hooks/uselocalstorage.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/hooks/uselocalstorage.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/hooks/useLocalStorage.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/gitmojilist/index.tsx">
+    <td data-sort="packages/website/src/components/gitmojilist/index.tsx">
+      <span class="file-path">packages/website/src/components/GitmojiList/index.tsx</span>
+    </td>
+    <td data-sort="1">
+      1
+    </td>
+    <td class="density-cell" data-sort="0.0005053057099545225">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.1%
+      </span>
+    </td>
+    <td data-sort="OTHER">
+      <div class="badge-row">
+        <span class="badge badge-context badge-other">Other</span>
+      </div>
+    </td>
+    <td data-sort="1,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 1</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/icon/__tests__/icon.spec.tsx">
+    <td data-sort="packages/website/src/components/icon/__tests__/icon.spec.tsx">
+      <span class="file-path">packages/website/src/components/Icon/__tests__/icon.spec.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/icon/__tests__/stubs.ts">
+    <td data-sort="packages/website/src/components/icon/__tests__/stubs.ts">
+      <span class="file-path">packages/website/src/components/Icon/__tests__/stubs.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/icon/definitions.tsx">
+    <td data-sort="packages/website/src/components/icon/definitions.tsx">
+      <span class="file-path">packages/website/src/components/Icon/definitions.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/icon/index.tsx">
+    <td data-sort="packages/website/src/components/icon/index.tsx">
+      <span class="file-path">packages/website/src/components/Icon/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/footer/index.tsx">
+    <td data-sort="packages/website/src/components/layout/footer/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Footer/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/hamburger/closeicon/index.tsx">
+    <td data-sort="packages/website/src/components/layout/hamburger/closeicon/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Hamburger/CloseIcon/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/hamburger/menulink/index.tsx">
+    <td data-sort="packages/website/src/components/layout/hamburger/menulink/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Hamburger/MenuLink/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/hamburger/openicon/index.tsx">
+    <td data-sort="packages/website/src/components/layout/hamburger/openicon/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Hamburger/OpenIcon/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/hamburger/index.tsx">
+    <td data-sort="packages/website/src/components/layout/hamburger/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Hamburger/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/status/joy/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/status/joy/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/Status/Joy/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/status/loved/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/status/loved/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/Status/Loved/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/status/sexy/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/status/sexy/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/Status/Sexy/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/status/smiling/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/status/smiling/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/Status/Smiling/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/status/sunglasses/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/status/sunglasses/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/Status/Sunglasses/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/status/tongue/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/status/tongue/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/Status/Tongue/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/status/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/status/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/Status/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/logo/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/logo/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/Logo/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/header/index.tsx">
+    <td data-sort="packages/website/src/components/layout/header/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/Header/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/__tests__/layout.spec.tsx">
+    <td data-sort="packages/website/src/components/layout/__tests__/layout.spec.tsx">
+      <span class="file-path">packages/website/src/components/Layout/__tests__/layout.spec.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/__tests__/stubs.ts">
+    <td data-sort="packages/website/src/components/layout/__tests__/stubs.ts">
+      <span class="file-path">packages/website/src/components/Layout/__tests__/stubs.ts</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/src/components/layout/index.tsx">
+    <td data-sort="packages/website/src/components/layout/index.tsx">
+      <span class="file-path">packages/website/src/components/Layout/index.tsx</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="packages/website/tsconfig.json">
+    <td data-sort="packages/website/tsconfig.json">
+      <span class="file-path">packages/website/tsconfig.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="pnpm-lock.yaml">
+    <td data-sort="pnpm-lock.yaml">
+      <span class="file-path">pnpm-lock.yaml</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="pnpm-workspace.yaml">
+    <td data-sort="pnpm-workspace.yaml">
+      <span class="file-path">pnpm-workspace.yaml</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr><tr class="file-row" data-path="turbo.json">
+    <td data-sort="turbo.json">
+      <span class="file-path">turbo.json</span>
+    </td>
+    <td data-sort="0">
+      0
+    </td>
+    <td class="density-cell" data-sort="0">
+      <span class="density-pill density-low" data-density-class="density-low">
+        0.0%
+      </span>
+    </td>
+    <td data-sort="">
+      <div class="badge-row">
+        <span class="empty-state">None</span>
+      </div>
+    </td>
+    <td data-sort="0,0,0,0">
+      <div class="action-list">
+        <span class="badge badge-action">Replace: 0</span><span class="badge badge-action">Remove: 0</span><span class="badge badge-action">Preserve: 0</span><span class="badge badge-action">Flag: 0</span>
+      </div>
+    </td>
+  </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+    <footer class="footer">
+    <span>Generated by demoji</span>
+    <span>Mar 23, 2026, 10:19:59 AM</span>
+  </footer>
+  </div>
+  <script>
+let activeSortColumn = 0;
+let activeSortDirection = 'asc';
+
+function updateIndicators(headers) {
+  headers.forEach(function (header, index) {
+    const indicator = header.querySelector('.sort-indicator');
+    if (!indicator) {
+      return;
+    }
+    if (index !== activeSortColumn) {
+      indicator.textContent = '';
+      return;
+    }
+    indicator.textContent = activeSortDirection === 'asc' ? 'ASC' : 'DESC';
+  });
+}
+
+function sortTable(columnIndex) {
+  const table = document.getElementById('report-table');
+  if (!table) {
+    return;
+  }
+
+  const body = table.tBodies[0];
+  const rows = Array.from(body.rows);
+  const headers = Array.from(table.tHead.rows[0].cells);
+
+  if (activeSortColumn === columnIndex) {
+    activeSortDirection = activeSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    activeSortColumn = columnIndex;
+    activeSortDirection = columnIndex === 0 ? 'asc' : 'desc';
+  }
+
+  rows.sort(function (left, right) {
+    const leftCell = left.cells[columnIndex];
+    const rightCell = right.cells[columnIndex];
+    const leftValue = leftCell.dataset.sort || leftCell.textContent || '';
+    const rightValue = rightCell.dataset.sort || rightCell.textContent || '';
+    const leftNumber = Number(leftValue);
+    const rightNumber = Number(rightValue);
+    let comparison = 0;
+
+    if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
+      comparison = leftNumber - rightNumber;
+    } else {
+      comparison = leftValue.localeCompare(rightValue, undefined, { sensitivity: 'base' });
+    }
+
+    return activeSortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  rows.forEach(function (row) {
+    body.appendChild(row);
+  });
+
+  updateIndicators(headers);
+}
+
+function filterTable(query) {
+  const table = document.getElementById('report-table');
+  if (!table) {
+    return;
+  }
+
+  const normalized = query.trim().toLowerCase();
+  Array.from(table.tBodies[0].rows).forEach(function (row) {
+    const path = row.dataset.path || '';
+    row.hidden = normalized !== '' && !path.includes(normalized);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const table = document.getElementById('report-table');
+  if (!table || !table.tHead) {
+    return;
+  }
+  updateIndicators(Array.from(table.tHead.rows[0].cells));
+});
+</script>
+</body>
+</html>
