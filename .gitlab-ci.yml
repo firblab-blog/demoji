@@ -1,0 +1,141 @@
+# demoji CI/CD Pipeline
+# Modeled on cogit's pipeline, sized for a single-package CLI tool.
+# Registry: 192.168.10.50:5050/applications/demoji
+# SonarQube: requires $SONAR_HOST_URL and $SONAR_TOKEN CI variables
+
+stages:
+  - validate
+  - scan
+
+include:
+  - project: 'infrastructure/ci-templates'
+    ref: main
+    file: sonarqube-ci.yml
+
+default:
+  image: node:22-alpine
+  tags:
+    - docker
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  before_script:
+    - npm ci --cache .npm --prefer-offline --no-audit
+
+.demoji-rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ---------------------------------------------------------------------------
+# validate stage
+# ---------------------------------------------------------------------------
+
+verify:
+  stage: validate
+  extends: .demoji-rules
+  script:
+    - npm run build
+    - npm run test
+  artifacts:
+    when: always
+    paths:
+      - dist/
+
+typecheck:
+  stage: validate
+  extends: .demoji-rules
+  script:
+    - npx tsc --noEmit
+
+# ---------------------------------------------------------------------------
+# scan stage — security + quality
+# ---------------------------------------------------------------------------
+
+security:npm-audit:
+  stage: scan
+  extends: .demoji-rules
+  script:
+    - npm audit --omit=dev --audit-level=high
+
+# Scan for accidentally committed secrets.
+# MR pipelines: scan only commits in the MR so pre-existing findings
+# don't block. Default-branch pipelines: scan full history against
+# a committed baseline so only net-new leaks fail the build.
+security:gitleaks:
+  stage: scan
+  extends: .demoji-rules
+  image:
+    name: zricethezav/gitleaks:v8.18.4
+    entrypoint: [""]
+  before_script: []
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - |
+      if [ -n "$CI_MERGE_REQUEST_DIFF_BASE_SHA" ]; then
+        echo "MR detected — scanning only new commits ($CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD)"
+        gitleaks detect --source . --exit-code 1 --redact \
+          --log-opts="$CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD"
+      elif [ -f .gitleaks-baseline.json ]; then
+        echo "Default branch — scanning against committed baseline"
+        gitleaks detect --source . --exit-code 1 --redact \
+          --baseline-path .gitleaks-baseline.json
+      else
+        echo "No baseline found — full scan"
+        gitleaks detect --source . --exit-code 1 --redact
+      fi
+
+# TypeScript/Node.js SAST using Semgrep OSS rules.
+# allow_failure: true — review findings then promote to blocking.
+security:semgrep:
+  stage: scan
+  extends: .demoji-rules
+  image: semgrep/semgrep:1.77.0
+  before_script: []
+  allow_failure: true
+  script:
+    - semgrep --config=p/typescript --config=p/nodejs --error --no-rewrite-rule-ids .
+
+# Filesystem scan: npm dep CVEs, secrets, and misconfigurations.
+# allow_failure: true — review findings then promote to blocking.
+security:trivy:fs:
+  stage: scan
+  extends: .demoji-rules
+  image:
+    name: aquasec/trivy:0.55.0
+    entrypoint: [""]
+  before_script: []
+  allow_failure: true
+  script:
+    - trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed
+        --scanners vuln,secret,misconfig .
+
+# SonarQube analysis with test coverage.
+# Runs coverage collection in before_script, then delegates to the
+# shared sonarqube-analysis template from ci-templates.
+sonarqube:analyze:
+  stage: scan
+  extends: .sonarqube-analysis
+  before_script:
+    - npm ci --cache .npm --prefer-offline --no-audit
+    - mkdir -p coverage
+    - >-
+      node --test --experimental-strip-types --experimental-test-coverage
+      --test-reporter=lcov --test-reporter-destination=coverage/lcov.info
+      tests/*.test.ts || true
+  rules:
+    # MR pipelines: analyze with PR decoration
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $SONAR_HOST_URL && $SONAR_TOKEN
+      variables:
+        SONAR_SCANNER_OPTS: >-
+          -Dsonar.pullrequest.provider=gitlab
+          -Dsonar.pullrequest.gitlab.repositorySlug=${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
+          -Dsonar.pullrequest.key=${CI_MERGE_REQUEST_IID}
+          -Dsonar.pullrequest.branch=${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}
+          -Dsonar.pullrequest.base=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}
+    # Main branch: full analysis
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SONAR_HOST_URL && $SONAR_TOKEN
