@@ -120,9 +120,9 @@ security:trivy:fs:
 sonarqube:analyze:
   stage: scan
   extends: .sonarqube-analysis
+  dependencies: []
   before_script:
     - npm ci --cache .npm --prefer-offline --no-audit
-    - rm -rf dist
     - npm run build
     - mkdir -p coverage
     - >-
