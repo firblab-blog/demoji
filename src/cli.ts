@@ -223,7 +223,7 @@ async function runClean(options: CliOptions): Promise<number> {
 async function runReport(options: CliOptions): Promise<number> {
   const analysis = await analyzePath(options);
   const reportPath = resolve(process.cwd(), options.output);
-  const html = generateReport([analysis.result]);
+  const html = generateReport(analysis.result);
 
   await writeFile(reportPath, html, 'utf8');
   process.stdout.write(`${reportPath}\n`);
