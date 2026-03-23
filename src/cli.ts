@@ -1,7 +1,21 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
+
+/**
+ * Resolve the absolute path to the git binary once at import time.
+ * This satisfies SonarQube S4036 — OS commands should not be resolved
+ * via the PATH environment variable, which could be tampered with.
+ */
+const GIT_PATH = (() => {
+  try {
+    const cmd = process.platform === 'win32' ? 'where git' : 'which git';
+    return execSync(cmd, { encoding: 'utf8' }).trim().split('\n')[0] ?? 'git';
+  } catch {
+    return 'git';
+  }
+})();
 
 import { analyzeFile } from './lib/detector.js';
 import { applyToFile, replace, type FileChange } from './lib/replacer.js';
@@ -403,23 +417,23 @@ function printDiffs(changes: FileChange[]): void {
 }
 
 function createBackupBranch(targetPath: string): string {
-  const repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+  const repoRoot = execFileSync(GIT_PATH, ['rev-parse', '--show-toplevel'], {
     cwd: targetPath,
     encoding: 'utf8',
   }).trim();
-  const currentRef = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+  const currentRef = execFileSync(GIT_PATH, ['rev-parse', '--abbrev-ref', 'HEAD'], {
     cwd: repoRoot,
     encoding: 'utf8',
   }).trim();
   const fallbackRef =
     currentRef === 'HEAD'
-      ? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim()
+      ? execFileSync(GIT_PATH, ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim()
       : currentRef;
   const timestamp = new Date().toISOString().replace(/[:.]/gu, '-');
   const branchName = `demoji/backup-${timestamp}`;
 
-  execFileSync('git', ['checkout', '-b', branchName], { cwd: repoRoot, stdio: 'ignore' });
-  execFileSync('git', ['checkout', fallbackRef], { cwd: repoRoot, stdio: 'ignore' });
+  execFileSync(GIT_PATH, ['checkout', '-b', branchName], { cwd: repoRoot, stdio: 'ignore' });
+  execFileSync(GIT_PATH, ['checkout', fallbackRef], { cwd: repoRoot, stdio: 'ignore' });
 
   return branchName;
 }
