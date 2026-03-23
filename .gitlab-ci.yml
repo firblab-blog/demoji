@@ -165,12 +165,13 @@ mirror:github:
     GIT_DEPTH: 0
     GIT_STRATEGY: clone
   script:
-    - apk add --no-cache git sed
-    # Configure git identity for the rewrite commit
-    - git config user.email "ci@firblab.org"
-    - git config user.name "firblab-ci"
-    # Remove files listed in .github-mirror-exclude
     - |
+      set -e
+      apk add --no-cache git sed
+
+      git config user.email "ci@firblab.org"
+      git config user.name "firblab-ci"
+
       if [ -f .github-mirror-exclude ]; then
         grep -v '^\s*#' .github-mirror-exclude | grep -v '^\s*$' | while read -r file; do
           if [ -e "$file" ]; then
@@ -179,16 +180,14 @@ mirror:github:
           fi
         done
       fi
-    # Rewrite package.json repository URL to GitHub
-    - |
+
       sed -i "s|http://192.168.10.50/applications/demoji.git|${GITHUB_MIRROR_REPO}.git|g" package.json
       git add package.json
-    # Create a mirror commit on a detached HEAD
-    - git commit -m "mirror: strip internal files for public release [skip ci]" --allow-empty
-    # Push to GitHub using the PAT
-    - |
+
+      git commit -m "mirror: strip internal files for public release [skip ci]" --allow-empty
+
       MIRROR_URL=$(echo "${GITHUB_MIRROR_REPO}" | sed "s|https://|https://x-access-token:${GITHUB_MIRROR_TOKEN}@|")
       git push --force "${MIRROR_URL}.git" HEAD:refs/heads/main
-    - echo "Mirror push to GitHub complete."
+      echo "Mirror push to GitHub complete."
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITHUB_MIRROR_TOKEN && $GITHUB_MIRROR_REPO
