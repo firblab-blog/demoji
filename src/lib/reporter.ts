@@ -93,7 +93,8 @@ function renderContextBreakdown(result: ScanResult): string {
       : CONTEXT_ORDER.map((context) => {
           const count = result.summary.byContext[context];
           const width = total === 0 ? 0 : (count / total) * 100;
-          return `<div class="context-segment context-${context.toLowerCase()}" style="width:${width.toFixed(2)}%" title="${escapeHtml(`${CONTEXT_LABELS[context]}: ${count}`)}"></div>`;
+          const title = escapeHtml(`${CONTEXT_LABELS[context]}: ${count}`);
+          return `<div class="context-segment context-${context.toLowerCase()}" style="width:${width.toFixed(2)}%" title="${title}"></div>`;
         }).join('');
 
   const legend = CONTEXT_ORDER.map((context) => {
@@ -772,9 +773,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/gu, '&amp;')
-    .replace(/</gu, '&lt;')
-    .replace(/>/gu, '&gt;')
-    .replace(/"/gu, '&quot;')
-    .replace(/'/gu, '&#039;');
+    .replaceAll(/&/gu, '&amp;')
+    .replaceAll(/</gu, '&lt;')
+    .replaceAll(/>/gu, '&gt;')
+    .replaceAll(/"/gu, '&quot;')
+    .replaceAll(/'/gu, '&#039;');
 }

@@ -150,6 +150,7 @@ export function applyReplacements(matches: EmojiMatch[], options: ReplaceOptions
   return matches.map((match) => {
     switch (match.context) {
       case 'COMMENT':
+      case 'OTHER':
         return {
           match,
           replacement: lookupTextEquivalent(match.emoji),
@@ -180,12 +181,6 @@ export function applyReplacements(matches: EmojiMatch[], options: ReplaceOptions
           match,
           replacement: match.emoji,
           action: 'preserve',
-        };
-      case 'OTHER':
-        return {
-          match,
-          replacement: lookupTextEquivalent(match.emoji),
-          action: 'replace',
         };
     }
   });

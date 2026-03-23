@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { accessSync, constants } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 
 /**
@@ -63,6 +63,39 @@ export interface CliOptions {
 
 const COMMANDS = new Set<Command>(['scan', 'clean', 'report', 'help']);
 
+const BOOLEAN_FLAGS: Record<string, 'strict' | 'yes' | 'json' | 'verbose' | 'dryRun'> = {
+  '--strict': 'strict',
+  '--yes': 'yes',
+  '--json': 'json',
+  '--verbose': 'verbose',
+  '--dry-run': 'dryRun',
+};
+
+const VALUE_FLAGS: ('output' | 'path')[] = ['output', 'path'];
+
+function parseValueFlag(
+  args: string[],
+  index: number,
+  name: string,
+): { value: string; skip: number } | null {
+  const arg = args[index] ?? '';
+  const eqForm = `--${name}=`;
+
+  if (arg === `--${name}`) {
+    const value = args[index + 1];
+    if (value === undefined) {
+      throw new Error(`Missing value for --${name}`);
+    }
+    return { value, skip: 1 };
+  }
+
+  if (arg.startsWith(eqForm)) {
+    return { value: arg.slice(eqForm.length), skip: 0 };
+  }
+
+  return null;
+}
+
 export function parseArgs(argv: string[]): CliOptions {
   const args = argv.slice(2);
   const defaults: CliOptions = {
@@ -90,11 +123,13 @@ export function parseArgs(argv: string[]): CliOptions {
   }
 
   const options: CliOptions = { ...defaults, command: first as Command };
+  let index = 1;
 
-  for (let index = 1; index < args.length; index += 1) {
+  while (index < args.length) {
     const arg = args[index];
 
     if (arg === undefined) {
+      index += 1;
       continue;
     }
 
@@ -102,58 +137,25 @@ export function parseArgs(argv: string[]): CliOptions {
       return { ...options, command: 'help' };
     }
 
-    if (arg === '--strict') {
-      options.strict = true;
-      continue;
-    }
-
-    if (arg === '--yes') {
-      options.yes = true;
-      continue;
-    }
-
-    if (arg === '--json') {
-      options.json = true;
-      continue;
-    }
-
-    if (arg === '--verbose') {
-      options.verbose = true;
-      continue;
-    }
-
-    if (arg === '--dry-run') {
-      options.dryRun = true;
-      continue;
-    }
-
-    if (arg === '--output') {
-      const value = args[index + 1];
-      if (value === undefined) {
-        throw new Error('Missing value for --output');
-      }
-      options.output = value;
+    const boolKey = BOOLEAN_FLAGS[arg];
+    if (boolKey !== undefined) {
+      options[boolKey] = true;
       index += 1;
       continue;
     }
 
-    if (arg.startsWith('--output=')) {
-      options.output = arg.slice('--output='.length);
-      continue;
-    }
-
-    if (arg === '--path') {
-      const value = args[index + 1];
-      if (value === undefined) {
-        throw new Error('Missing value for --path');
+    let matched = false;
+    for (const flagName of VALUE_FLAGS) {
+      const parsed = parseValueFlag(args, index, flagName);
+      if (parsed !== null) {
+        options[flagName] = parsed.value;
+        index += 1 + parsed.skip;
+        matched = true;
+        break;
       }
-      options.path = value;
-      index += 1;
-      continue;
     }
 
-    if (arg.startsWith('--path=')) {
-      options.path = arg.slice('--path='.length);
+    if (matched) {
       continue;
     }
 
@@ -166,6 +168,7 @@ export function parseArgs(argv: string[]): CliOptions {
     }
 
     options.path = arg;
+    index += 1;
   }
 
   return options;
@@ -294,21 +297,17 @@ async function analyzePath(options: CliOptions): Promise<Analysis> {
 
     files.push(fileResult);
 
-    for (const match of matches) {
-      byContext[match.context] += 1;
-      totalEmoji += 1;
-    }
-
-    for (const replacement of replacements) {
-      byAction[replacement.action] += 1;
-      if (replacement.action === 'flag') {
-        identifierFlags.push({
-          filePath: relativePath,
-          line: replacement.match.line,
-          snippet: formatSnippet(analysis.content, replacement.match.line, analysis.streamed),
-        });
-      }
-    }
+    const stats = accumulateFileStats(
+      matches,
+      replacements,
+      byContext,
+      byAction,
+      relativePath,
+      analysis.content,
+      analysis.streamed,
+    );
+    totalEmoji += stats.emojiCount;
+    identifierFlags.push(...stats.identifierFlags);
 
     if (matches.length > 0) {
       filesWithEmoji += 1;
@@ -441,7 +440,7 @@ function createBackupBranch(targetPath: string): string {
     currentRef === 'HEAD'
       ? execFileSync(GIT_PATH, ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim()
       : currentRef;
-  const timestamp = new Date().toISOString().replace(/[:.]/gu, '-');
+  const timestamp = new Date().toISOString().replaceAll(/[:.]/gu, '-');
   const branchName = `demoji/backup-${timestamp}`;
 
   execFileSync(GIT_PATH, ['checkout', '-b', branchName], { cwd: repoRoot, stdio: 'ignore' });
@@ -477,6 +476,37 @@ function createActionCounts(): Record<Replacement['action'], number> {
     preserve: 0,
     flag: 0,
   };
+}
+
+function accumulateFileStats(
+  matches: import('./lib/types.js').EmojiMatch[],
+  replacements: Replacement[],
+  byContext: Record<EmojiContext, number>,
+  byAction: Record<Replacement['action'], number>,
+  filePath: string,
+  content: string | null,
+  streamed: boolean,
+): { identifierFlags: IdentifierFlag[]; emojiCount: number } {
+  const flags: IdentifierFlag[] = [];
+  let emojiCount = 0;
+
+  for (const match of matches) {
+    byContext[match.context] += 1;
+    emojiCount += 1;
+  }
+
+  for (const replacement of replacements) {
+    byAction[replacement.action] += 1;
+    if (replacement.action === 'flag') {
+      flags.push({
+        filePath,
+        line: replacement.match.line,
+        snippet: formatSnippet(content, replacement.match.line, streamed),
+      });
+    }
+  }
+
+  return { identifierFlags: flags, emojiCount };
 }
 
 function isActionable(replacement: Replacement): boolean {

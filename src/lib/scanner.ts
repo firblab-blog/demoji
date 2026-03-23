@@ -61,6 +61,25 @@ const SUPPORTED_EXTENSIONS = new Set([
   '.toml',
 ]);
 
+async function resolveEntryKind(
+  entry: import('node:fs').Dirent,
+  fullPath: string,
+): Promise<'directory' | 'file' | 'skip'> {
+  if (entry.isDirectory()) {
+    return 'directory';
+  }
+
+  if (entry.isSymbolicLink()) {
+    const entryStat = await stat(fullPath);
+    if (entryStat.isDirectory()) {
+      return 'directory';
+    }
+    return entryStat.isFile() ? 'file' : 'skip';
+  }
+
+  return entry.isFile() ? 'file' : 'skip';
+}
+
 export async function* scan(options: ScanOptions): AsyncGenerator<string> {
   const root = options.root;
   const extensions = options.extensions ?? SUPPORTED_EXTENSIONS;
@@ -120,23 +139,14 @@ export async function* scan(options: ScanOptions): AsyncGenerator<string> {
         continue;
       }
 
-      if (entry.isDirectory()) {
+      const kind = await resolveEntryKind(entry, fullPath);
+
+      if (kind === 'directory') {
         yield* walkDirectory(fullPath, depth + 1, contexts);
         continue;
       }
 
-      if (entry.isSymbolicLink()) {
-        const entryStat = await stat(fullPath);
-
-        if (entryStat.isDirectory()) {
-          yield* walkDirectory(fullPath, depth + 1, contexts);
-          continue;
-        }
-
-        if (!entryStat.isFile()) {
-          continue;
-        }
-      } else if (!entry.isFile()) {
+      if (kind === 'skip') {
         continue;
       }
 
@@ -341,36 +351,39 @@ function compileIgnoreRegex(pattern: string): RegExp {
 
 function globToRegexSource(pattern: string): string {
   let source = '';
+  let index = 0;
 
-  for (let index = 0; index < pattern.length; index += 1) {
+  while (index < pattern.length) {
     const char = pattern[index] ?? '';
-    const next = pattern[index + 1];
     const nextTwo = pattern.slice(index, index + 3);
 
     if (nextTwo === '**/') {
       source += '(?:.*/)?';
+      index += 3;
+      continue;
+    }
+
+    if (char === '*' && pattern[index + 1] === '*') {
+      source += '.*';
       index += 2;
       continue;
     }
 
     if (char === '*') {
-      if (next === '*') {
-        source += '.*';
-        index += 1;
-      } else {
-        source += '[^/]*';
-      }
+      source += '[^/]*';
+      index += 1;
       continue;
     }
 
     source += escapeRegex(char);
+    index += 1;
   }
 
   return source;
 }
 
 function escapeRegex(value: string): string {
-  return value.replace(/[|\\{}()[\]^$+?.]/gu, '\\$&');
+  return value.replaceAll(/[|\\{}()[\]^$+?.]/gu, String.raw`\$&`);
 }
 
 function stripTrailingSlash(value: string): string {
@@ -378,7 +391,7 @@ function stripTrailingSlash(value: string): string {
 }
 
 function normalizePath(value: string): string {
-  return value.replace(/\\/gu, '/');
+  return value.replaceAll(/\\/gu, '/');
 }
 
 function normalizeRelativePath(root: string, target: string): string {
@@ -395,7 +408,7 @@ function isEncodingError(error: unknown): boolean {
 }
 
 function stripBom(content: string): string {
-  return content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
+  return content.codePointAt(0) === 0xfeff ? content.slice(1) : content;
 }
 
 export { ALWAYS_SKIP, SUPPORTED_EXTENSIONS, isBinaryFile, isIgnored, parseGitignore };

@@ -45,9 +45,9 @@ export interface AnalyzeFileOptions {
 export const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
 
 const EMOJI_ATOM =
-  '(?:\\p{Regional_Indicator}{2}|[#*0-9]\\uFE0F?\\u20E3|(?:\\p{Emoji_Presentation}|\\p{Extended_Pictographic})(?:\\uFE0F)?(?:\\p{Emoji_Modifier})?)';
+  String.raw`(?:\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3|(?:\p{Emoji_Presentation}|\p{Extended_Pictographic})(?:\uFE0F)?(?:\p{Emoji_Modifier})?)`;
 
-const EMOJI_SEQUENCE_REGEX = new RegExp(`${EMOJI_ATOM}(?:\\u200D${EMOJI_ATOM})*`, 'gu');
+const EMOJI_SEQUENCE_REGEX = new RegExp(String.raw`${EMOJI_ATOM}(?:\u200D${EMOJI_ATOM})*`, 'gu');
 
 /**
  * Characters that match \p{Extended_Pictographic} but are standard text symbols,
@@ -201,6 +201,18 @@ function mapCodeRegions(content: string, language: Language): CodeRegion[] {
     return mapJsonStrings(content);
   }
 
+  if (C_STYLE_LANGUAGES.has(language)) {
+    return mergeRegions(mapCStyleRegions(content, language));
+  }
+
+  if (HASH_COMMENT_LANGUAGES.has(language)) {
+    return mergeRegions(mapHashCommentRegions(content, language));
+  }
+
+  return [];
+}
+
+function mapCStyleRegions(content: string, language: Language): CodeRegion[] {
   const regions: CodeRegion[] = [];
   let index = 0;
 
@@ -208,76 +220,85 @@ function mapCodeRegions(content: string, language: Language): CodeRegion[] {
     const char = content[index];
     const next = content[index + 1] ?? '';
 
-    if (C_STYLE_LANGUAGES.has(language)) {
-      if (char === '/' && next === '/') {
-        const end = findLineEnd(content, index + 2);
-        regions.push({ start: index, end, type: 'comment' });
-        index = end;
-        continue;
-      }
-
-      if (char === '/' && next === '*') {
-        const end = findBlockCommentEnd(content, index + 2, '*/');
-        regions.push({ start: index, end, type: 'comment' });
-        index = end;
-        continue;
-      }
-
-      if (char === '"' || char === '\'') {
-        const end = scanQuotedString(content, index, char);
-        regions.push({ start: index, end, type: 'string' });
-        index = end;
-        continue;
-      }
-
-      if ((language === 'typescript' || language === 'javascript') && char === '`') {
-        const template = scanTemplateLiteral(content, index);
-        regions.push(...template);
-        const lastRegion = template.at(-1);
-        index = lastRegion?.end ?? index + 1;
-        continue;
-      }
+    if (char === '/' && next === '/') {
+      const end = findLineEnd(content, index + 2);
+      regions.push({ start: index, end, type: 'comment' });
+      index = end;
+      continue;
     }
 
-    if (HASH_COMMENT_LANGUAGES.has(language)) {
-      if (language === 'ruby' && atRubyBlockCommentStart(content, index)) {
-        const end = findRubyBlockCommentEnd(content, index);
-        regions.push({ start: index, end, type: 'comment' });
-        index = end;
-        continue;
-      }
+    if (char === '/' && next === '*') {
+      const end = findBlockCommentEnd(content, index + 2, '*/');
+      regions.push({ start: index, end, type: 'comment' });
+      index = end;
+      continue;
+    }
 
-      if (char === '#') {
-        const end = findLineEnd(content, index + 1);
-        regions.push({ start: index, end, type: 'comment' });
-        index = end;
-        continue;
-      }
+    if (char === '"' || char === '\'') {
+      const end = scanQuotedString(content, index, char);
+      regions.push({ start: index, end, type: 'string' });
+      index = end;
+      continue;
+    }
 
-      if (char === '"' || char === '\'') {
-        const end = scanQuotedString(content, index, char);
-        regions.push({ start: index, end, type: 'string' });
-        index = end;
-        continue;
-      }
-
-      if (language === 'python' && (content.startsWith('"""', index) || content.startsWith('\'\'\'', index))) {
-        const delimiter = content.slice(index, index + 3);
-        const end = scanTripleQuotedString(content, index, delimiter);
-        regions.push({
-          start: index,
-          end,
-          type: isPythonDocstring(content, index) ? 'comment' : 'string',
-        });
-        index = end;
-        continue;
-      }
+    if ((language === 'typescript' || language === 'javascript') && char === '`') {
+      const template = scanTemplateLiteral(content, index);
+      regions.push(...template);
+      const lastRegion = template.at(-1);
+      index = lastRegion?.end ?? index + 1;
+      continue;
     }
 
     index += 1;
   }
 
-  return mergeRegions(regions);
+  return regions;
+}
+
+function mapHashCommentRegions(content: string, language: Language): CodeRegion[] {
+  const regions: CodeRegion[] = [];
+  let index = 0;
+
+  while (index < content.length) {
+    const char = content[index];
+
+    if (language === 'ruby' && atRubyBlockCommentStart(content, index)) {
+      const end = findRubyBlockCommentEnd(content, index);
+      regions.push({ start: index, end, type: 'comment' });
+      index = end;
+      continue;
+    }
+
+    if (char === '#') {
+      const end = findLineEnd(content, index + 1);
+      regions.push({ start: index, end, type: 'comment' });
+      index = end;
+      continue;
+    }
+
+    if (char === '"' || char === '\'') {
+      const end = scanQuotedString(content, index, char);
+      regions.push({ start: index, end, type: 'string' });
+      index = end;
+      continue;
+    }
+
+    if (language === 'python' && (content.startsWith('"""', index) || content.startsWith('\'\'\'', index))) {
+      const delimiter = content.slice(index, index + 3);
+      const end = scanTripleQuotedString(content, index, delimiter);
+      regions.push({
+        start: index,
+        end,
+        type: isPythonDocstring(content, index) ? 'comment' : 'string',
+      });
+      index = end;
+      continue;
+    }
+
+    index += 1;
+  }
+
+  return regions;
 }
 
 function classifyEmoji(
@@ -338,6 +359,21 @@ function getLineColumn(offset: number, lineStarts: number[]): { line: number; co
   return { line: 1, column: offset + 1 };
 }
 
+function processStreamLine(
+  rawLine: string,
+  displayPath: string,
+  lineNumber: number,
+  offset: number,
+): { matches: EmojiMatch[]; totalChars: number } {
+  const analysis = analyzeContent(rawLine, displayPath);
+  const matches = analysis.matches.map((match) => ({
+    ...match,
+    line: match.line + lineNumber - 1,
+    offset: match.offset + offset,
+  }));
+  return { matches, totalChars: analysis.totalChars };
+}
+
 async function detectLargeFile(
   filePath: string,
   displayPath: string,
@@ -356,7 +392,7 @@ async function detectLargeFile(
     for await (const chunk of stream) {
       pending += decoder.decode(chunk, { stream: true });
 
-      if (lineNumber === 0 && pending.charCodeAt(0) === 0xfeff) {
+      if (lineNumber === 0 && pending.codePointAt(0) === 0xfeff) {
         pending = pending.slice(1);
       }
 
@@ -371,16 +407,9 @@ async function detectLargeFile(
         }
 
         lineNumber += 1;
-        const analysis = analyzeContent(rawLine, displayPath);
-        totalChars += analysis.totalChars;
-
-        for (const match of analysis.matches) {
-          matches.push({
-            ...match,
-            line: match.line + lineNumber - 1,
-            offset: match.offset + offset,
-          });
-        }
+        const result = processStreamLine(rawLine, displayPath, lineNumber, offset);
+        totalChars += result.totalChars;
+        matches.push(...result.matches);
 
         offset += rawLine.length + 1;
         newlineIndex = pending.indexOf('\n');
@@ -388,22 +417,15 @@ async function detectLargeFile(
     }
 
     pending += decoder.decode();
-    if (lineNumber === 0 && pending.charCodeAt(0) === 0xfeff) {
+    if (lineNumber === 0 && pending.codePointAt(0) === 0xfeff) {
       pending = pending.slice(1);
     }
 
     if (pending.length > 0) {
       lineNumber += 1;
-      const analysis = analyzeContent(pending, displayPath);
-      totalChars += analysis.totalChars;
-
-      for (const match of analysis.matches) {
-        matches.push({
-          ...match,
-          line: match.line + lineNumber - 1,
-          offset: match.offset + offset,
-        });
-      }
+      const result = processStreamLine(pending, displayPath, lineNumber, offset);
+      totalChars += result.totalChars;
+      matches.push(...result.matches);
     }
   } catch (error) {
     if (error instanceof TypeError && /encoded data was not valid/i.test(error.message)) {
@@ -517,52 +539,54 @@ function scanTemplateLiteral(content: string, start: number): CodeRegion[] {
   return regions;
 }
 
+function advanceTemplateExpression(
+  content: string,
+  index: number,
+  depth: { value: number },
+): number | null {
+  const char = content[index];
+  const next = content[index + 1] ?? '';
+
+  if (char === '"' || char === '\'') {
+    return scanQuotedString(content, index, char);
+  }
+
+  if (char === '`') {
+    const nested = scanTemplateLiteral(content, index);
+    return nested.at(-1)?.end ?? index + 1;
+  }
+
+  if (char === '/' && next === '/') {
+    return findLineEnd(content, index + 2);
+  }
+
+  if (char === '/' && next === '*') {
+    return findBlockCommentEnd(content, index + 2, '*/');
+  }
+
+  if (char === '{') {
+    depth.value += 1;
+    return index + 1;
+  }
+
+  if (char === '}') {
+    depth.value -= 1;
+    return depth.value === 0 ? null : index + 1;
+  }
+
+  return index + 1;
+}
+
 function scanTemplateExpression(content: string, start: number): number {
-  let depth = 1;
+  const depth = { value: 1 };
   let index = start;
 
   while (index < content.length) {
-    const char = content[index];
-    const next = content[index + 1] ?? '';
-
-    if (char === '"' || char === '\'') {
-      index = scanQuotedString(content, index, char);
-      continue;
+    const next = advanceTemplateExpression(content, index, depth);
+    if (next === null) {
+      return index + 1;
     }
-
-    if (char === '`') {
-      const nested = scanTemplateLiteral(content, index);
-      const lastRegion = nested.at(-1);
-      index = lastRegion?.end ?? index + 1;
-      continue;
-    }
-
-    if (char === '/' && next === '/') {
-      index = findLineEnd(content, index + 2);
-      continue;
-    }
-
-    if (char === '/' && next === '*') {
-      index = findBlockCommentEnd(content, index + 2, '*/');
-      continue;
-    }
-
-    if (char === '{') {
-      depth += 1;
-      index += 1;
-      continue;
-    }
-
-    if (char === '}') {
-      depth -= 1;
-      index += 1;
-      if (depth === 0) {
-        return index;
-      }
-      continue;
-    }
-
-    index += 1;
+    index = next;
   }
 
   return content.length;
@@ -603,7 +627,7 @@ function isPythonDocstring(content: string, start: number): boolean {
     return true;
   }
 
-  const previous = prefix[prefix.length - 1];
+  const previous = prefix.at(-1);
   return previous === '\n' || previous === ':' || previous === '(';
 }
 
@@ -622,7 +646,7 @@ function mergeRegions(regions: CodeRegion[]): CodeRegion[] {
 
   for (let index = 1; index < sorted.length; index += 1) {
     const current = sorted[index];
-    const previous = merged[merged.length - 1];
+    const previous = merged.at(-1);
 
     if (current === undefined || previous === undefined) {
       continue;
