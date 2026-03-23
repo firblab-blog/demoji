@@ -122,6 +122,7 @@ sonarqube:analyze:
   extends: .sonarqube-analysis
   before_script:
     - npm ci --cache .npm --prefer-offline --no-audit
+    - rm -rf dist
     - npm run build
     - mkdir -p coverage
     - >-
