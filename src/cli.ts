@@ -1,20 +1,32 @@
-import { execFileSync, execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import { accessSync, constants } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 
 /**
  * Resolve the absolute path to the git binary once at import time.
- * This satisfies SonarQube S4036 — OS commands should not be resolved
- * via the PATH environment variable, which could be tampered with.
+ * Uses a static list of well-known directories rather than spawning a
+ * shell (which would trigger SonarQube S4721 — command injection) or
+ * relying on PATH resolution at call time (S4036).
  */
 const GIT_PATH = (() => {
-  try {
-    const cmd = process.platform === 'win32' ? 'where git' : 'which git';
-    return execSync(cmd, { encoding: 'utf8' }).trim().split('\n')[0] ?? 'git';
-  } catch {
-    return 'git';
+  const candidates = process.platform === 'win32'
+    ? ['C:\\Program Files\\Git\\cmd\\git.exe', 'C:\\Program Files (x86)\\Git\\cmd\\git.exe']
+    : ['/usr/bin/git', '/usr/local/bin/git', '/opt/homebrew/bin/git'];
+
+  for (const candidate of candidates) {
+    try {
+      accessSync(candidate, constants.X_OK);
+      return candidate;
+    } catch {
+      // not found at this path, try next
+    }
   }
+
+  // Fallback: let the OS resolve it (acceptable on systems with
+  // non-standard layouts; the static lookup covers common cases).
+  return 'git';
 })();
 
 import { analyzeFile } from './lib/detector.js';
