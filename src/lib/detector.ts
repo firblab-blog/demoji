@@ -49,6 +49,17 @@ const EMOJI_ATOM =
 
 const EMOJI_SEQUENCE_REGEX = new RegExp(`${EMOJI_ATOM}(?:\\u200D${EMOJI_ATOM})*`, 'gu');
 
+/**
+ * Characters that match \p{Extended_Pictographic} but are standard text symbols,
+ * not emoji. These are excluded from detection unless they carry an explicit
+ * emoji variation selector (U+FE0F).
+ */
+const TEXT_PRESENTATION_EXCLUSIONS = new Set([
+  0x00a9, // © Copyright
+  0x00ae, // ® Registered
+  0x2122, // ™ Trademark
+]);
+
 const C_STYLE_LANGUAGES = new Set<Language>([
   'typescript',
   'javascript',
@@ -128,6 +139,10 @@ function analyzeContent(content: string, filePath = ''): { matches: EmojiMatch[]
     const offset = match.index;
 
     if (offset === undefined) {
+      continue;
+    }
+
+    if (isTextPresentationOnly(emoji)) {
       continue;
     }
 
@@ -673,6 +688,25 @@ function findEnclosingCall(content: string, regionStart: number): string {
   }
 
   return content.slice(index + 1, end);
+}
+
+/**
+ * Returns true when the matched sequence is a single character from the
+ * text-presentation exclusion list WITHOUT an explicit emoji variation
+ * selector (U+FE0F). Characters like © followed by \uFE0F are genuine
+ * emoji presentations and should still be detected.
+ */
+function isTextPresentationOnly(emoji: string): boolean {
+  const codepoint = emoji.codePointAt(0) ?? 0;
+
+  if (!TEXT_PRESENTATION_EXCLUSIONS.has(codepoint)) {
+    return false;
+  }
+
+  // If the character is followed by U+FE0F (emoji presentation selector)
+  // then the author explicitly wants emoji rendering — keep detecting it.
+  const charLength = codepoint > 0xffff ? 2 : 1;
+  return emoji.codePointAt(charLength) !== 0xfe0f;
 }
 
 function isIdentifierEmoji(content: string, offset: number, length: number): boolean {

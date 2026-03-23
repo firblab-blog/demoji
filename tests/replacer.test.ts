@@ -112,5 +112,33 @@ test('applyToFile applies replacements in reverse offset order', () => {
   );
 
   const change = applyToFile('sample.ts', content, replacements);
-  assert.equal(change.modifiedContent, '// [OK][HOT][NEW]');
+  assert.equal(change.modifiedContent, '// [OK][HOT][SPARKLE]');
+});
+
+test('new mappings resolve common emoji to readable text', () => {
+  const cases: Array<[string, string]> = [
+    ['❤️', '[HEART]'],
+    ['🙏', '[PRAY]'],
+    ['👋', '[WAVE]'],
+    ['📖', '[DOCS]'],
+    ['🎨', '[ART]'],
+    ['⭐', '[STAR]'],
+    ['💻', '[COMPUTER]'],
+    ['📢', '[ANNOUNCE]'],
+    ['🌍', '[GLOBE]'],
+    ['👀', '[EYES]'],
+    ['👏', '[CLAP]'],
+    ['🚨', '[ALERT]'],
+    ['🆕', '[NEW]'],
+    ['🐞', '[BUG]'],
+    ['➕', '[PLUS]'],
+    ['⚡', '[ZAP]'],
+    ['🤝', '[HANDSHAKE]'],
+    ['🔗', '[LINK]'],
+  ];
+
+  for (const [emoji, expected] of cases) {
+    const [replacement] = applyReplacements([createMatch(emoji, 'COMMENT')], { strict: false });
+    assert.equal(replacement?.replacement, expected, `Expected ${emoji} to map to ${expected}`);
+  }
 });

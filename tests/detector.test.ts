@@ -52,6 +52,14 @@ test('detect handles template literals, block comments, and escaped quotes', () 
   assert.equal(detect('/* multi\nline\n🚀\ncomment */', 'sample.ts')[0]?.context, 'COMMENT');
 });
 
+test('detect excludes text-presentation symbols like ©, ®, ™', () => {
+  assert.equal(detect('//  Copyright © 2024 Acme Corp', 'sample.cpp').length, 0);
+  assert.equal(detect('//  Acme® is a trademark™ of Acme Corp', 'sample.ts').length, 0);
+  assert.equal(detect('const notice = "© 2024"', 'sample.ts').length, 0);
+  // But ©️ with explicit emoji variation selector SHOULD be detected
+  assert.equal(detect('// ©\uFE0F emoji copyright', 'sample.ts').length, 1);
+});
+
 test('detect reports line, column, and codepoints', () => {
   const match = detect('const value = 1;\n// 🚀 launch', 'sample.ts')[0];
   assert.ok(match);
