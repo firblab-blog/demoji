@@ -405,7 +405,10 @@ function stripTrailingSlash(value: string): string {
 }
 
 function normalizePath(value: string): string {
-  return value.replaceAll('\\', '/');
+  if (process.platform === 'win32') {
+    return value.replaceAll('\\', '/');
+  }
+  return value;
 }
 
 function normalizeRelativePath(root: string, target: string): string {

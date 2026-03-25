@@ -1,5 +1,5 @@
 import * as assert from 'node:assert/strict';
-import { rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 
@@ -59,6 +59,30 @@ test('scan does not loop forever on symlink cycles', async () => {
   const files = await collectScanResults();
 
   assert.equal(files.filter((file) => file === 'nested/deep.ts').length, 1);
+});
+
+test('scan handles filenames with backslashes on non-Windows platforms', async () => {
+  if (process.platform === 'win32') {
+    return;
+  }
+
+  const tmpDir = join(fixtureRoot, 'backslash-test');
+  const backslashFile = join(tmpDir, 'sub\\file.json');
+
+  await mkdir(tmpDir, { recursive: true });
+  await writeFile(backslashFile, '{"emoji": "🚀"}');
+
+  try {
+    const files: string[] = [];
+    for await (const file of scan({ root: tmpDir })) {
+      files.push(file);
+    }
+
+    assert.equal(files.length, 1);
+    assert.ok(files[0]?.includes('\\'), 'filename should preserve the literal backslash');
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true });
+  }
 });
 
 async function collectScanResults(): Promise<string[]> {

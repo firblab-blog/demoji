@@ -96,7 +96,18 @@ export async function analyzeFile(
   displayPath = filePath,
   options: AnalyzeFileOptions = {},
 ): Promise<FileDetectionResult | null> {
-  const fileStat = await stat(filePath);
+  let fileStat;
+  try {
+    fileStat = await stat(filePath);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      if (options.verbose) {
+        console.warn(`Skipping ${displayPath}: file not found`);
+      }
+      return null;
+    }
+    throw error;
+  }
   const loadContent = options.loadContent ?? false;
 
   if (fileStat.size > LARGE_FILE_THRESHOLD && !loadContent) {
