@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://192.168.10.50/applications/demoji.git"
+    "url": "https://github.com/firblab-blog/demoji.git"
   },
   "keywords": [
     "emoji",
